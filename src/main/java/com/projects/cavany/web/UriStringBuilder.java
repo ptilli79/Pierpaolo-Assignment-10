@@ -1,4 +1,4 @@
-package com.coderscampus.assignment10.web;
+package com.projects.cavany.web;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

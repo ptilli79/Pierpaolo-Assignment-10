@@ -1,12 +1,12 @@
-package com.coderscampus.assignment10;
+package com.projects.cavany;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SpoonacularApp {
+public class CavanyApp {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SpoonacularApp.class, args);
+		SpringApplication.run(CavanyApp.class, args);
 	}
 }

@@ -1,4 +1,4 @@
-package com.coderscampus.assignment10.service;
+package com.projects.cavany.service;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

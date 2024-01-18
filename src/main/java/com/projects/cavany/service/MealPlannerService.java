@@ -1,4 +1,4 @@
-package com.coderscampus.assignment10.service;
+package com.projects.cavany.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,13 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.coderscampus.assignment10.dto.Meal;
-import com.coderscampus.assignment10.dto.RecipeDetailsDTO;
-import com.coderscampus.assignment10.dto.WeeklyPlanner;
-import com.coderscampus.assignment10.dto.WeeklyPlannerResponse;
-import com.coderscampus.assignment10.repository.RecipeDetailsRepository;
-import com.coderscampus.assignment10.repository.WeeklyPlannerRepository;
-import com.coderscampus.assignment10.web.UriStringBuilder;
+import com.projects.cavany.dto.Meal;
+import com.projects.cavany.dto.RecipeDetailsDTO;
+import com.projects.cavany.dto.WeeklyPlanner;
+import com.projects.cavany.dto.WeeklyPlannerResponse;
+import com.projects.cavany.repository.RecipeDetailsRepository;
+import com.projects.cavany.repository.WeeklyPlannerRepository;
+import com.projects.cavany.web.UriStringBuilder;
 
 @Service
 public class MealPlannerService {

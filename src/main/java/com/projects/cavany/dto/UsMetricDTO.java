@@ -1,4 +1,4 @@
-package com.coderscampus.assignment10.dto;
+package com.projects.cavany.dto;
 
 public class UsMetricDTO {
     private double amount;

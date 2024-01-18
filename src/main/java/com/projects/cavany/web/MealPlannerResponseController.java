@@ -1,4 +1,4 @@
-package com.coderscampus.assignment10.web;
+package com.projects.cavany.web;
 
 
 import java.net.URI;
@@ -16,15 +16,16 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.coderscampus.assignment10.dto.DailyPlanner;
-import com.coderscampus.assignment10.dto.Meal;
-import com.coderscampus.assignment10.dto.RecipeDetailsDTO;
-import com.coderscampus.assignment10.dto.WeeklyPlanner;
-import com.coderscampus.assignment10.dto.WeeklyPlannerResponse;
-import com.coderscampus.assignment10.repository.DailyPlannerRepository;
-import com.coderscampus.assignment10.repository.RecipeDetailsRepository;
-import com.coderscampus.assignment10.repository.WeeklyPlannerRepository;
-import com.coderscampus.assignment10.service.MealPlannerService;
+
+import com.projects.cavany.dto.DailyPlanner;
+import com.projects.cavany.dto.Meal;
+import com.projects.cavany.dto.RecipeDetailsDTO;
+import com.projects.cavany.dto.WeeklyPlanner;
+import com.projects.cavany.dto.WeeklyPlannerResponse;
+import com.projects.cavany.repository.DailyPlannerRepository;
+import com.projects.cavany.repository.RecipeDetailsRepository;
+import com.projects.cavany.repository.WeeklyPlannerRepository;
+import com.projects.cavany.service.MealPlannerService;
 
 //import ch.qos.logback.classic.Logger;
 @RestController

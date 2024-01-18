@@ -1,4 +1,4 @@
-package com.coderscampus.assignment10.repository;
+package com.projects.cavany.repository;
 
 
 import java.util.ArrayList;
@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Repository;
 
-import com.coderscampus.assignment10.dto.RecipeDetailsDTO;
-import com.coderscampus.assignment10.dto.WeeklyPlannerResponse;
+import com.projects.cavany.dto.RecipeDetailsDTO;
+import com.projects.cavany.dto.WeeklyPlannerResponse;
 
 
 @Repository

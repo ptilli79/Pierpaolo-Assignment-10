@@ -1,4 +1,4 @@
-package com.coderscampus.assignment10.dto;
+package com.projects.cavany.dto;
 
 import java.util.Objects;
 

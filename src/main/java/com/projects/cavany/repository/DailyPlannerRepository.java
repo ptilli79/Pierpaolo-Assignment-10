@@ -1,9 +1,10 @@
-package com.coderscampus.assignment10.repository;
+package com.projects.cavany.repository;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.stereotype.Repository;
-import com.coderscampus.assignment10.dto.DailyPlanner;
+
+import com.projects.cavany.dto.DailyPlanner;
 
 @Repository
 public class DailyPlannerRepository {
