@@ -11,12 +11,13 @@ public class DailyPlannerRepository {
 
 	private Long index = 0L;
 	
-	public void save (DailyPlanner genericMealPlan) {
+	public DailyPlanner save (DailyPlanner genericMealPlan) {
 		dailyMealPlan.put(index, genericMealPlan);
 		index++;
+		return(getDailyPlanById(index-1));
 	}
 	
-	public DailyPlanner getWeeklyPlanById (Long dailyMealPlanId) {
+	public DailyPlanner getDailyPlanById (Long dailyMealPlanId) {
 		return dailyMealPlan.get(dailyMealPlanId);
 	}
 	

@@ -12,9 +12,10 @@ public class WeeklyPlannerRepository {
 	private Map<Long, WeeklyPlannerResponse> weeklyMealPlan = new HashMap<Long, WeeklyPlannerResponse>();
 	private Long index = 0L;
 	
-	public void save (WeeklyPlannerResponse genericMealPlan) {
+	public WeeklyPlannerResponse save (WeeklyPlannerResponse genericMealPlan) {
 		weeklyMealPlan.put(index, genericMealPlan);
 		index++;
+		return(getWeeklyPlanById(index-1));
 	}
 	
 	public WeeklyPlannerResponse getWeeklyPlanById (Long weeklyMealPlanId) {
