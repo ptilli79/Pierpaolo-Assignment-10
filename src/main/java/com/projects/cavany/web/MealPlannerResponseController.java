@@ -1,53 +1,77 @@
 package com.projects.cavany.web;
 
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.projects.cavany.dto.ComplexSearchResultItemDTO;
+import com.projects.cavany.dto.ComplexSearchResultsDTO;
 import com.projects.cavany.dto.DailyPlanner;
 import com.projects.cavany.dto.Meal;
+import com.projects.cavany.dto.RandomSearchResponse;
 import com.projects.cavany.dto.RecipeDetailsDTO;
 import com.projects.cavany.dto.WeeklyPlanner;
 import com.projects.cavany.dto.WeeklyPlannerResponse;
 import com.projects.cavany.repository.DailyPlannerRepository;
 import com.projects.cavany.repository.RecipeDetailsRepository;
 import com.projects.cavany.repository.WeeklyPlannerRepository;
+import com.projects.cavany.service.GenerateRecipeService;
 import com.projects.cavany.service.MealPlannerService;
 
 //import ch.qos.logback.classic.Logger;
 @RestController
 public class MealPlannerResponseController {
 	
-		@Autowired
-		private WeeklyPlannerRepository weekPlannerRepo;
+	@Autowired
+	private WeeklyPlannerRepository weekPlannerRepo;
 	
 	@Autowired
 	private DailyPlannerRepository dayPlannerRepo;
 	
 	@Autowired
-	private RecipeDetailsRepository recipeDetailsInfo;
+	private RecipeDetailsRepository recipeDetailsRepo;
 	
     @Autowired
     private MealPlannerService mealPlannerService;
+    
+    @Autowired
+    private GenerateRecipeService generateRecipeService;
 	
 	@Autowired
 	private UriStringBuilder uriString;
 	
+    @Autowired
+    private RecipeDetailsRepository recipeDetailsRepository;
+	
+    private int maxRequestsPerSecond = 4; // Change this value as needed
+    private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
+    String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
+
+	
 	//@SuppressWarnings("unchecked")
-	@RequestMapping("/mealplanner/week")
+	@GetMapping("/mealplanner/week")
 	public WeeklyPlannerResponse getWeekMeals(String targetCalories, String diet, String exclude) {
 	    RestTemplate rt = new RestTemplate();
 	    ResponseEntity<WeeklyPlannerResponse> responseEntity = rt.getForEntity(generateUriHelper(uriString.toString(), targetCalories, diet, exclude, "week"), WeeklyPlannerResponse.class);
@@ -58,8 +82,183 @@ public class MealPlannerResponseController {
         // You can also return the saved WeeklyPlannerResponse or another appropriate response
         return plannerResponse;
 	}
-		
-	@GetMapping("/mealplanner/day")
+	
+	@RequestMapping("/recipes/random")
+	public ResponseEntity<RandomSearchResponse> fetchAndSaveRandomRecipes(String targetCalories, String diet, String exclude, Integer number, Integer offset) {
+	    RestTemplate rt = new RestTemplate();
+
+	    // Create headers with "Accept: application/json"
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+	    // Set your API key as a query parameter
+	    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(uriString.toStringRandomSearch());
+	    // Replace with your actual API key
+
+	    if (!(diet == null || diet.length() == 0)) {
+	        builder.queryParam("diet", diet);
+	    }
+	    if (!(targetCalories == null || targetCalories.length() == 0)) {
+	        builder.queryParam("targetCalories", Integer.parseInt(targetCalories));
+	    }
+	    if (!(exclude == null || exclude.length() == 0)) {
+	        builder.queryParam("exclude", exclude);
+	    }
+	    if (!(number == null)) {
+	        builder.queryParam("number", number);
+	    }
+	    if (!(offset == null)) {
+	        builder.queryParam("offset", offset);
+	    }
+
+	    builder.queryParam("apiKey", uriString.getApiKey());
+
+	    // Create a request entity with the headers
+	    HttpEntity<?> requestEntity = new HttpEntity<>(headers);
+
+	    // Send the request with the request entity
+	    System.out.println(builder.toUriString());
+	    ResponseEntity<RandomSearchResponse> responseEntity = rt.exchange(
+	            builder.toUriString(),
+	            HttpMethod.GET,
+	            requestEntity,
+	            RandomSearchResponse.class // Specify the response type
+	    );
+
+	    RandomSearchResponse randomSearchResponse = responseEntity.getBody();
+
+	    try {
+	        // Iterate through the received list of recipes and save each one
+	        List<RecipeDetailsDTO> recipes = randomSearchResponse.getRecipes(); // Get the list of recipes from the response
+
+	        for (RecipeDetailsDTO recipe : recipes) {
+	            // Check if the recipe with this ID exists in the repository
+	            Long recipeId = recipe.getId();
+	            RecipeDetailsDTO existingRecipe = recipeDetailsRepository.getRecipeById(recipeId);
+
+	            if (existingRecipe == null) {
+	                // Recipe with the given ID doesn't exist in the repository, save it
+	                recipeDetailsRepository.save(recipe);
+	            }
+	        }
+	        
+	        generateRecipeService.generateRecipeCSV(recipeDetailsRepo.getAll(), recipesFilePath);
+	        
+	        return ResponseEntity.ok(randomSearchResponse);
+	    } catch (Exception e) {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(randomSearchResponse);
+	    }
+	}
+
+
+
+//	        try {
+	            // Iterate through the received list of recipes and save each one
+//	            for (RecipeDetailsDTO recipe : recipes) {
+	                // Check if the recipe with this ID exists in the repository
+//	                Long recipeId = recipe.getId();
+//	                RecipeDetailsDTO existingRecipe = recipeDetailsRepository.getRecipeById(recipeId);
+
+//	                if (existingRecipe == null) {
+	                    // Recipe with the given ID doesn't exist in the repository, save it
+//	                    recipeDetailsRepository.save(recipe);
+//	                }
+//	            }
+//	            return ResponseEntity.ok("Recipes saved successfully.");
+//	        } catch (Exception e) {
+//	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving recipes.");
+//	        }
+
+	
+	
+	
+	
+	@RequestMapping("/complex/search")
+	public ComplexSearchResultsDTO getSearch(String targetCalories, String diet, String exclude, Integer number, Integer offset) throws IOException {
+	    RestTemplate rt = new RestTemplate();
+
+	    // Create headers with "Accept: application/json"
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+	    // Set your API key as a query parameter
+	    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(uriString.toStringComplexSearch());
+	             // Replace with your actual API key
+	    
+	    if (!(diet == null || diet.length() == 0)) {
+	        builder.queryParam("diet", diet);
+	    }
+		if (!(targetCalories==null || targetCalories.length()==0)) {
+			builder.queryParam("targetCalories", Integer.parseInt(targetCalories));
+		}
+	    if (!(exclude == null || exclude.length() == 0)) {
+	        builder.queryParam("exclude", exclude);
+	    }
+	    if (!(number == null)) {
+	        builder.queryParam("number", number);
+	    }
+	    if (!(offset == null)) {
+	        builder.queryParam("offset", offset);
+	    }
+	    		
+	    builder.queryParam("apiKey", uriString.getApiKey());
+
+	    // Create a request entity with the headers
+	    HttpEntity<?> requestEntity = new HttpEntity<>(headers);
+
+	    // Send the request with the request entity
+	    System.out.println(builder.toUriString());
+	    ResponseEntity<ComplexSearchResultsDTO> responseEntity = rt.exchange(
+	        builder.toUriString(),
+	        HttpMethod.GET,
+	        requestEntity, 
+	        ComplexSearchResultsDTO.class
+	    );
+	    ComplexSearchResultsDTO complexSearchResponse = responseEntity.getBody();
+	    
+	    //now get the recipe information of each recipe and saved it in the repo
+	    int requestsMade = 0;
+        // Save each recipe's information into your repository
+	    List<ComplexSearchResultItemDTO> results = complexSearchResponse.getResults();
+	    for (ComplexSearchResultItemDTO result : results) {
+	        Long recipeId = result.getId();
+	        // Check if the recipe with this ID exists in the repository
+	        RecipeDetailsDTO existingRecipe = recipeDetailsRepo.getRecipeById(recipeId);
+
+	        if (existingRecipe == null) {
+                if (requestsMade >= maxRequestsPerSecond) {
+                    try {
+                        Thread.sleep(rateLimitIntervalMillis);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    requestsMade = 0; // Reset the request counter
+                }
+	            // Recipe with the given ID doesn't exist in the repository, fetch its details
+	            ResponseEntity<RecipeDetailsDTO> recipeResponseEntity = rt.exchange(
+	                uriString.toStringRecipeInformation(Long.toString(recipeId)),
+	                HttpMethod.GET,
+	                requestEntity,
+	                RecipeDetailsDTO.class
+	            );
+
+	            if (recipeResponseEntity.getStatusCode().is2xxSuccessful()) {
+	                RecipeDetailsDTO recipeDetails = recipeResponseEntity.getBody();
+	                if (recipeDetails != null) {
+	                    // Save the recipe in the repository
+	                    recipeDetailsRepo.save(recipeDetails);
+	                }
+	            }
+	            requestsMade++;
+	        }
+	    }
+	    
+	    generateRecipeService.generateRecipeCSV(recipeDetailsRepo.getAll(), recipesFilePath);
+	    
+        return complexSearchResponse;
+	}
+	
+	@RequestMapping("/mealplanner/day")
 	public DailyPlanner getDayMeals(String targetCalories, String diet, String exclude){
 		RestTemplate rt = new RestTemplate();
 		//System.out.println(generateUriHelper(targetCalories, diet, exclude, "week"));
@@ -78,7 +277,7 @@ public class MealPlannerResponseController {
 	        if (responseEntity.getStatusCode().is2xxSuccessful()) {
 	            RecipeDetailsDTO recipeDetails = responseEntity.getBody();
 	            if (recipeDetails != null) {
-	                recipeDetailsInfo.save(recipeDetails);
+	                recipeDetailsRepo.save(recipeDetails);
 	                return ResponseEntity.ok(recipeDetails);
 	            }
 	        }
@@ -108,11 +307,12 @@ public class MealPlannerResponseController {
 	
 	@GetMapping("/recipe/detailsRepo")
 	public Map<Long, RecipeDetailsDTO> getRecipes(){
-		return recipeDetailsInfo.getAll();
+		return recipeDetailsRepo.getAll();
 	}
 	
 	private URI generateUriHelper(String uriString, String targetCalories, String diet, String exclude, String timeFrame) {
 		//String url = uriString.toString();
+		
 		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(uriString);
 		builder.queryParam("timeFrame", timeFrame);
 		

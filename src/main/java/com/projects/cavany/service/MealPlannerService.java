@@ -1,16 +1,15 @@
 package com.projects.cavany.service;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.projects.cavany.dto.Meal;
 import com.projects.cavany.dto.RecipeDetailsDTO;
@@ -35,12 +34,9 @@ public class MealPlannerService {
 	@Autowired
 	private RestTemplate restTemplate;
 	
-	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 250; // 1000 milliseconds (1 second)
 
-	
     public WeeklyPlannerResponse processAndSavePlanner(WeeklyPlannerResponse plannerResponse) {
         if (plannerResponse != null && plannerResponse.getWeek() != null) {
             WeeklyPlanner weeklyPlanner = plannerResponse.getWeek();
@@ -62,7 +58,6 @@ public class MealPlannerService {
                         }
                         requestsMade = 0; // Reset the request counter
                     }
-
                     String recipeId = Long.toString(meal.getId());
                     ResponseEntity<RecipeDetailsDTO> recipeResponseEntity = restTemplate.getForEntity(uriString.toStringRecipeInformation(recipeId), RecipeDetailsDTO.class);
 
@@ -72,7 +67,6 @@ public class MealPlannerService {
                             savedRecipes.add(recipeDetails);
                         }
                     }
-
                     requestsMade++;
                 }
             }
@@ -92,7 +86,6 @@ public class MealPlannerService {
             return null; // Or provide an appropriate response
         }
     }
+    
 
-    
-    
 }
