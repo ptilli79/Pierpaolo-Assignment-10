@@ -13,63 +13,56 @@ import com.projects.cavany.dto.WeeklyPlannerResponse;
 
 @Repository
 public class RecipeDetailsRepository {
-	private Map<Long, RecipeDetailsDTO> recipeDetails = new HashMap<Long, RecipeDetailsDTO>();
-	private Long index = 0L;
-	
-	public RecipeDetailsDTO save(RecipeDetailsDTO genericRecipeDetails) {
-	    for (Map.Entry<Long, RecipeDetailsDTO> entry : recipeDetails.entrySet()) {
-	        if (entry.getValue().getId() == genericRecipeDetails.getId()) {
-	            // Recipe with the same ID already exists, update it
-	            entry.setValue(genericRecipeDetails);
-	            return entry.getValue();
-	        }
-	    }
+    private Map<Long, RecipeDetailsDTO> recipeDetails = new HashMap<>();
+    private Long index = 0L;
 
-	    // Recipe with the given ID doesn't exist, add it
-	    recipeDetails.put(index, genericRecipeDetails);
-	    index++;
-	    return getRecipeById(index - 1);
-	}
-	
-	public RecipeDetailsDTO getRecipeById (Long weeklyMealPlanId) {
-		return recipeDetails.get(weeklyMealPlanId);
-	}
-	
-	public Map<Long, RecipeDetailsDTO> getAll () {
-		return recipeDetails;
-	}
+    public RecipeDetailsDTO save(RecipeDetailsDTO genericRecipeDetails) {
+        Long recipeId = genericRecipeDetails.getId();
 
-	public List<RecipeDetailsDTO> saveAll(List<RecipeDetailsDTO> recipeList) {
-	    List<RecipeDetailsDTO> savedRecipes = new ArrayList<>();
+        if (recipeDetails.containsKey(recipeId)) {
+            // Recipe with the same ID already exists, update it
+            recipeDetails.put(recipeId, genericRecipeDetails);
+        } else {
+            // Recipe with the given ID doesn't exist, add it
+            recipeDetails.put(recipeId, genericRecipeDetails);
+            index++;
+        }
+        
+        return recipeDetails.get(recipeId);
+    }
 
-	    for (RecipeDetailsDTO genericRecipeDetails : recipeList) {
-	        boolean recipeExists = false;
-	        for (Map.Entry<Long, RecipeDetailsDTO> entry : recipeDetails.entrySet()) {
-	            if (entry.getValue().getId() == genericRecipeDetails.getId()) {
-	                // Recipe with the same ID already exists, update it
-	                entry.setValue(genericRecipeDetails);
-	                savedRecipes.add(entry.getValue());
-	                recipeExists = true;
-	                break;
-	            }
-	        }
+    public RecipeDetailsDTO getRecipeById(Long recipeId) {
+        return recipeDetails.get(recipeId);
+    }
 
-	        if (!recipeExists) {
-	            // Recipe with the given ID doesn't exist, add it
-	            recipeDetails.put(index, genericRecipeDetails);
-	            savedRecipes.add(genericRecipeDetails);
-	            index++;
-	        }
-	    }
+    public Map<Long, RecipeDetailsDTO> getAll() {
+        return recipeDetails;
+    }
 
-	    return savedRecipes;
-	}
+    public List<RecipeDetailsDTO> saveAll(List<RecipeDetailsDTO> recipeList) {
+        List<RecipeDetailsDTO> savedRecipes = new ArrayList<>();
 
-	
-	@Override
-	public String toString() {
-		return "RecipeInformationRepository [recipeDetails=" + recipeDetails + "]";
-	}
-	
-	
+        for (RecipeDetailsDTO genericRecipeDetails : recipeList) {
+            Long recipeId = genericRecipeDetails.getId();
+            boolean recipeExists = recipeDetails.containsKey(recipeId);
+
+            if (recipeExists) {
+                // Recipe with the same ID already exists, update it
+                recipeDetails.put(recipeId, genericRecipeDetails);
+                savedRecipes.add(genericRecipeDetails);
+            } else {
+                // Recipe with the given ID doesn't exist, add it
+                recipeDetails.put(recipeId, genericRecipeDetails);
+                savedRecipes.add(genericRecipeDetails);
+                index++;
+            }
+        }
+
+        return savedRecipes;
+    }
+
+    @Override
+    public String toString() {
+        return "RecipeDetailsRepository [recipeDetails=" + recipeDetails + "]";
+    }
 }

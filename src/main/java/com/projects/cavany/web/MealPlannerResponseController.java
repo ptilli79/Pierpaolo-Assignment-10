@@ -4,6 +4,7 @@ package com.projects.cavany.web;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,11 +22,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.projects.cavany.dto.BulkRecipeDetailsDTO;
 import com.projects.cavany.dto.ComplexSearchResultItemDTO;
 import com.projects.cavany.dto.ComplexSearchResultsDTO;
 import com.projects.cavany.dto.DailyPlanner;
@@ -67,6 +70,8 @@ public class MealPlannerResponseController {
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
+    private static final int maxIds = 5000;
+    private static final int batchSize = 50;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
 
 	
@@ -74,6 +79,7 @@ public class MealPlannerResponseController {
 	@GetMapping("/mealplanner/week")
 	public WeeklyPlannerResponse getWeekMeals(String targetCalories, String diet, String exclude) {
 	    RestTemplate rt = new RestTemplate();
+	    System.out.println(generateUriHelper(uriString.toString(), targetCalories, diet, exclude, "week"));
 	    ResponseEntity<WeeklyPlannerResponse> responseEntity = rt.getForEntity(generateUriHelper(uriString.toString(), targetCalories, diet, exclude, "week"), WeeklyPlannerResponse.class);
 	    WeeklyPlannerResponse plannerResponse = responseEntity.getBody();
 	    
@@ -258,6 +264,67 @@ public class MealPlannerResponseController {
         return complexSearchResponse;
 	}
 	
+	   @GetMapping("/recipes/informationBulk")
+	    public ResponseEntity<BulkRecipeDetailsDTO[]> getRecipes(@RequestParam("ids") String ids) {
+	        String url = uriString.toStringRecipeBulkInformation() +"?ids="+ ids + "&apiKey=" + uriString.getApiKey();
+	        RestTemplate restTemplate = new RestTemplate();
+	        System.out.println(url);
+	        ResponseEntity<BulkRecipeDetailsDTO[]> response = restTemplate.getForEntity(url, BulkRecipeDetailsDTO[].class);
+	        
+	        // New Logic to save recipes and check if they already exist
+	        List<BulkRecipeDetailsDTO> recipesToSave = new ArrayList<>(Arrays.asList(response.getBody()));
+	        for (BulkRecipeDetailsDTO recipe : recipesToSave) {
+	            RecipeDetailsDTO existingRecipe = recipeDetailsRepository.getRecipeById(recipe.getId());
+	            if (existingRecipe == null) {
+	                recipeDetailsRepository.save(recipe);
+	            } else {
+	                System.out.println("Recipe with ID " + recipe.getId() + " already exists in the repository.");
+	            }
+	        }
+
+	        return response;
+	    }
+	
+	    @GetMapping("/recipes/fetchRecipes")
+	    public void fetchRecipes() throws IOException {
+	        RestTemplate restTemplate = new RestTemplate();
+	        int requestsMade = 0;
+
+	        for (int i = 0; i < maxIds; i += batchSize) {
+	            StringBuilder ids = new StringBuilder();
+	            for (int j = i; j < i + batchSize && j < maxIds; j++) {
+	                if (j > i) ids.append(",");
+	                ids.append(j);
+	            }
+
+	            String url = uriString.toStringRecipeBulkInformation() + "?ids=" + ids.toString() + "&apiKey=" + uriString.getApiKey();
+
+	            if (requestsMade >= maxRequestsPerSecond) {
+	                try {
+	                    Thread.sleep(rateLimitIntervalMillis);
+	                } catch (InterruptedException e) {
+	                    Thread.currentThread().interrupt();
+	                }
+	                requestsMade = 0;
+	            }
+	            System.out.println(url);
+	            ResponseEntity<BulkRecipeDetailsDTO[]> response = restTemplate.getForEntity(url, BulkRecipeDetailsDTO[].class);
+	            requestsMade++;
+
+	            // Handle the response - save to repository
+	            Arrays.stream(response.getBody()).forEach(recipe -> {
+	                RecipeDetailsDTO existingRecipe = recipeDetailsRepository.getRecipeById(recipe.getId());
+	                if (existingRecipe == null) {
+	                    recipeDetailsRepository.save(recipe);
+	                } else {
+	                    System.out.println("Recipe with ID " + recipe.getId() + " already exists in the repository.");
+	                }
+	            });
+	            generateRecipeService.generateRecipeCSV(recipeDetailsRepo.getAll(), recipesFilePath);
+	        }
+	    }   
+	    
+	    
 	@RequestMapping("/mealplanner/day")
 	public DailyPlanner getDayMeals(String targetCalories, String diet, String exclude){
 		RestTemplate rt = new RestTemplate();
@@ -267,7 +334,7 @@ public class MealPlannerResponseController {
 		dayPlannerRepo.save(responseEntity.getBody());
 		return dayPlannerRepo.save(responseEntity.getBody());
 	}
-	
+		
 	@GetMapping("/recipe/{recipeId}")
 	public ResponseEntity<?> getRecipeInformation(@PathVariable String recipeId) {
 	    try {

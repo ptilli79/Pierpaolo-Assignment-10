@@ -56,6 +56,9 @@ target/
 *.iml
 *.ipr
 
+### Output folder for csv file build test ###
+/output
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

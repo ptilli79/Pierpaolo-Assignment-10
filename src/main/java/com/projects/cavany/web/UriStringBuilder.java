@@ -12,6 +12,7 @@ public class UriStringBuilder {
         private String apiKey;
         private String complexSearch;
         private String randomSearch;
+        private String bulkInformation;
         
 		public String getBase() {
 			return base;
@@ -58,6 +59,14 @@ public class UriStringBuilder {
 			this.randomSearch = randomSearch;
 		}
 		
+		public String getBulkInformation() {
+			return bulkInformation;
+		}
+		
+		public void setBulkInformation(String bulkInformation) {
+			this.bulkInformation = bulkInformation;
+		}
+		
 		@Override
 		public String toString() {
 			return base + mealPlan + "?apiKey=" + apiKey;
@@ -75,5 +84,10 @@ public class UriStringBuilder {
 		public String toStringRandomSearch() {
 			// TODO Auto-generated method stub
 			return base + randomSearch;
+		}
+		
+		public String toStringRecipeBulkInformation() {
+			// TODO Auto-generated method stub
+			return base + bulkInformation;
 		}
 }

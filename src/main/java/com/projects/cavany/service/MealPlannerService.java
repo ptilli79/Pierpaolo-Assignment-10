@@ -26,7 +26,7 @@ public class MealPlannerService {
 	private WeeklyPlannerRepository weekPlannerRepo;
 
     @Autowired
-    private RecipeDetailsRepository recipeDetailsInfo;
+    private RecipeDetailsRepository recipeDetailsRepo;
     
 	@Autowired
 	private UriStringBuilder uriString;
@@ -59,20 +59,33 @@ public class MealPlannerService {
                         requestsMade = 0; // Reset the request counter
                     }
                     String recipeId = Long.toString(meal.getId());
-                    ResponseEntity<RecipeDetailsDTO> recipeResponseEntity = restTemplate.getForEntity(uriString.toStringRecipeInformation(recipeId), RecipeDetailsDTO.class);
 
-                    if (recipeResponseEntity.getStatusCode().is2xxSuccessful()) {
-                        RecipeDetailsDTO recipeDetails = recipeResponseEntity.getBody();
-                        if (recipeDetails != null) {
-                            savedRecipes.add(recipeDetails);
-                        }
+                    // Check if the recipe with this ID exists in the repository
+                    RecipeDetailsDTO existingRecipe = recipeDetailsRepo.getRecipeById(meal.getId());
+
+                    if (existingRecipe == null) {
+                        // Recipe with the given ID doesn't exist in the repository, make the API request
+                    	System.out.println(uriString.toStringRecipeInformation(recipeId));
+                        ResponseEntity<RecipeDetailsDTO> recipeResponseEntity = restTemplate.getForEntity(
+                            uriString.toStringRecipeInformation(recipeId), RecipeDetailsDTO.class);
+
+                        //if (recipeResponseEntity.getStatusCode().is2xxSuccessful()) {
+                            RecipeDetailsDTO recipeDetails = recipeResponseEntity.getBody();
+                            if (recipeDetails != null) {
+                                // Save the recipe to the repository
+                                recipeDetailsRepo.save(recipeDetails);
+                                savedRecipes.add(recipeDetails);
+                            }
+                        //}
                     }
+ 
+                    
                     requestsMade++;
                 }
             }
 
             // Save the list of recipes to your repository
-            recipeDetailsInfo.saveAll(savedRecipes);
+            recipeDetailsRepo.saveAll(savedRecipes);
 
             // Optionally, remove the "allDaysOfWeek" field from the planner response
             // weeklyPlanner.getAllDaysOfWeek().clear();
