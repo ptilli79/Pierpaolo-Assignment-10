@@ -57,7 +57,7 @@ target/
 *.ipr
 
 ### Output folder for csv file build test ###
-/output
+/output/
 
 ### NetBeans ###
 /nbproject/private/
