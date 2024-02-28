@@ -266,7 +266,7 @@ public class MealPlannerResponseController {
 	
 	   @GetMapping("/recipes/informationBulk")
 	    public ResponseEntity<BulkRecipeDetailsDTO[]> getRecipes(@RequestParam("ids") String ids) {
-	        String url = uriString.toStringRecipeBulkInformation() +"?ids="+ ids + "&apiKey=" + uriString.getApiKey();
+	        String url = uriString.toStringRecipeBulkInformation() +"?ids="+ ids + "&includeNutrition=true&apiKey=" + uriString.getApiKey();
 	        RestTemplate restTemplate = new RestTemplate();
 	        System.out.println(url);
 	        ResponseEntity<BulkRecipeDetailsDTO[]> response = restTemplate.getForEntity(url, BulkRecipeDetailsDTO[].class);
