@@ -8,6 +8,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -28,17 +32,25 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.projects.cavany.domain.ExtendedIngredient;
+import com.projects.cavany.domain.Measures;
+import com.projects.cavany.domain.MetricSystem;
+import com.projects.cavany.domain.RecipeDetails;
 import com.projects.cavany.dto.BulkRecipeDetailsDTO;
 import com.projects.cavany.dto.ComplexSearchResultItemDTO;
 import com.projects.cavany.dto.ComplexSearchResultsDTO;
 import com.projects.cavany.dto.DailyPlanner;
+import com.projects.cavany.dto.ExtendedIngredientDTO;
 import com.projects.cavany.dto.Meal;
+import com.projects.cavany.dto.MeasuresDTO;
 import com.projects.cavany.dto.RandomSearchResponse;
 import com.projects.cavany.dto.RecipeDetailsDTO;
 import com.projects.cavany.dto.WeeklyPlanner;
 import com.projects.cavany.dto.WeeklyPlannerResponse;
 import com.projects.cavany.repository.DailyPlannerRepository;
+import com.projects.cavany.repository.ExtendedIngredientRepositoryNeo4j;
 import com.projects.cavany.repository.RecipeDetailsRepository;
+import com.projects.cavany.repository.RecipeDetailsRepositoryNeo4j;
 import com.projects.cavany.repository.WeeklyPlannerRepository;
 import com.projects.cavany.service.GenerateRecipeService;
 import com.projects.cavany.service.MealPlannerService;
@@ -67,6 +79,12 @@ public class MealPlannerResponseController {
 	
     @Autowired
     private RecipeDetailsRepository recipeDetailsRepository;
+    
+    @Autowired
+    private RecipeDetailsRepositoryNeo4j recipeDetailsRepositoryNeo4j;
+    
+    @Autowired
+    private ExtendedIngredientRepositoryNeo4j extendedIngredientRepositoryNeo4j;
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
@@ -290,15 +308,25 @@ public class MealPlannerResponseController {
 	        RestTemplate restTemplate = new RestTemplate();
 	        int requestsMade = 0;
 
-	        for (int i = 0; i < maxIds; i += batchSize) {
+	        // Fetch existing recipe IDs from Neo4j
+	        Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAll().stream()
+	        	    .map(RecipeDetails::getId)
+	        	    .collect(Collectors.toSet());
+	        
+	        Optional<Long> maxIdInDb = recipeDetailsRepositoryNeo4j.findMaxId();
+	        long startId = maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0;
+
+	        for (long i = startId; i < maxIds; i += batchSize) {
 	            StringBuilder ids = new StringBuilder();
-	            for (int j = i; j < i + batchSize && j < maxIds; j++) {
-	                if (j > i) ids.append(",");
-	                ids.append(j);
+	            for (long j = i; j < i + batchSize && j < maxIds; j++) {
+	                if (!existingIds.contains((long) j)) {
+	                    if (ids.length() > 0) ids.append(",");
+	                    ids.append(j);
+	                }
 	            }
+	            if (ids.length() == 0) continue; // Skip API call if all IDs exist
 
 	            String url = uriString.toStringRecipeBulkInformation() + "?ids=" + ids.toString() + "&apiKey=" + uriString.getApiKey();
-
 	            if (requestsMade >= maxRequestsPerSecond) {
 	                try {
 	                    Thread.sleep(rateLimitIntervalMillis);
@@ -312,15 +340,11 @@ public class MealPlannerResponseController {
 	            requestsMade++;
 
 	            // Handle the response - save to repository
-	            Arrays.stream(response.getBody()).forEach(recipe -> {
-	                RecipeDetailsDTO existingRecipe = recipeDetailsRepository.getRecipeById(recipe.getId());
-	                if (existingRecipe == null) {
-	                    recipeDetailsRepository.save(recipe);
-	                } else {
-	                    System.out.println("Recipe with ID " + recipe.getId() + " already exists in the repository.");
-	                }
+	            Arrays.stream(response.getBody()).forEach(recipeDetailsDTO -> {
+	                RecipeDetails recipe = convertToRecipeEntity(recipeDetailsDTO);
+	                recipeDetailsRepositoryNeo4j.save(recipe);
 	            });
-	            generateRecipeService.generateRecipeCSV(recipeDetailsRepo.getAll(), recipesFilePath);
+	            //generateRecipeService.generateRecipeCSV(recipeDetailsRepo.getAll(), recipesFilePath);
 	        }
 	    }   
 	    
@@ -393,6 +417,90 @@ public class MealPlannerResponseController {
 			builder = builder.queryParam("exclude", exclude);
 		}
 		return (builder.build().toUri());
+	}
+	
+	private RecipeDetails convertToRecipeEntity(RecipeDetailsDTO dto) {
+	    RecipeDetails recipe = new RecipeDetails();
+	    // Set properties from DTO to Recipe entity
+	    recipe.setId(dto.getId());
+	    recipe.setTitle(dto.getTitle());
+	    recipe.setVegan(dto.isVegan());
+	    recipe.setVegetarian(dto.isVegetarian());
+	    recipe.setGlutenFree(dto.isGlutenFree());
+	    recipe.setDairyFree(dto.isDairyFree());
+	    recipe.setVeryHealthy(dto.isVeryHealthy());
+	    recipe.setCheap(dto.isCheap());
+	    recipe.setVeryPopular(dto.isVeryPopular());
+	    recipe.setSustainable(dto.isSustainable());
+	    recipe.setLowFodmap(dto.isLowFodmap());
+	    recipe.setWeightWatcherSmartPoints(dto.getWeightWatcherSmartPoints());
+	    recipe.setGaps(dto.getGaps());
+	    recipe.setPreparationMinutes(dto.getPreparationMinutes());
+	    recipe.setCookingMinutes(dto.getCookingMinutes());
+	    recipe.setAggregateLikes(dto.getAggregateLikes());
+	    recipe.setHealthScore(dto.getHealthScore());
+	    recipe.setCreditsText(dto.getCreditsText());
+	    recipe.setSourceName(dto.getSourceName());
+	    recipe.setPricePerServing(dto.getPricePerServing());
+	    recipe.setReadyInMinutes(dto.getReadyInMinutes());
+	    recipe.setServings(dto.getServings());
+	    recipe.setSourceUrl(dto.getSourceUrl());
+	    recipe.setImage(dto.getImage());
+	    recipe.setImageType(dto.getImageType());
+	    recipe.setSummary(dto.getSummary());
+	    recipe.setCuisines(dto.getCuisines());
+	    recipe.setDishTypes(dto.getDishTypes());
+	    recipe.setDiets(dto.getDiets());
+	    recipe.setOccasions(dto.getOccasions());
+	    // Convert WinePairingDTO if necessary or handle it according to your logic
+	    recipe.setInstructions(dto.getInstructions());
+	    recipe.setOriginalId(dto.getOriginalId());
+	    recipe.setSpoonacularScore(dto.getSpoonacularScore());
+	    recipe.setSpoonacularSourceUrl(dto.getSpoonacularSourceUrl());
+	    
+	 // Convert extendedIngredients from DTO to Entity
+	    List<ExtendedIngredient> extendedIngredients = new ArrayList<>();
+	    for (ExtendedIngredientDTO ingredientDTO : dto.getExtendedIngredients()) {
+	        ExtendedIngredient ingredient = new ExtendedIngredient();
+	        MeasuresDTO measuresDto = ingredientDTO.getMeasures(); // Get the MeasuresDto from ExtendedIngredientDTO
+	        if (measuresDto != null) {
+	           
+	        MetricSystem usMetric = new MetricSystem();
+	        usMetric.setAmount(measuresDto.getUs().getAmount());
+	        usMetric.setUnitShort(measuresDto.getUs().getUnitShort());
+	        usMetric.setUnitLong(measuresDto.getUs().getUnitLong());
+	           
+	        MetricSystem metricMetric = new MetricSystem();
+	        metricMetric.setAmount(measuresDto.getMetric().getAmount());
+	        metricMetric.setUnitShort(measuresDto.getMetric().getUnitShort());
+	        metricMetric.setUnitLong(measuresDto.getMetric().getUnitLong());
+	       
+
+	            // Now set the measures in ingredient
+	        ingredient.setUs(usMetric);
+	        ingredient.setMetric(metricMetric);
+	        }
+	        ingredient.setId(ingredientDTO.getId());
+	        ingredient.setAisle(ingredientDTO.getAisle());
+	        ingredient.setImage(ingredientDTO.getImage());
+	        ingredient.setConsistency(ingredientDTO.getConsistency());
+	        ingredient.setName(ingredientDTO.getName());
+	        ingredient.setNameClean(ingredientDTO.getNameClean());
+	        ingredient.setOriginal(ingredientDTO.getOriginal());
+	        ingredient.setOriginalName(ingredientDTO.getOriginalName());
+	        ingredient.setAmount(ingredientDTO.getAmount());
+	        ingredient.setUnit(ingredientDTO.getUnit());
+	        ingredient.setMeta(ingredientDTO.getMeta());
+	        // Set relationship if necessary
+	        // ingredient.setRecipeDetails(associatedRecipeDetails); // Set this if you are associating with a RecipeDetails entity
+	        extendedIngredients.add(ingredient);
+
+	        //Insert here logic to convert MeasuresDto to Measures
+	        
+	    }
+
+	    recipe.setExtendedIngredients(extendedIngredients);
+	    return recipe;
 	}
 }
 
