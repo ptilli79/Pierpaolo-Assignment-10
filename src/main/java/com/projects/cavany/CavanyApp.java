@@ -14,3 +14,4 @@ public class CavanyApp {
 		SpringApplication.run(CavanyApp.class, args);
 	}
 }
+	

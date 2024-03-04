@@ -89,12 +89,13 @@ public class RecipeDetails {
     // For example, List<String> could be managed as related nodes
     @Relationship(type = "HAS_INGREDIENT", direction = Relationship.Direction.OUTGOING)
     private List<ExtendedIngredient> extendedIngredients = new ArrayList<>();
-    //@Relationship(type = "HAS_WINE_PAIRING")
-    //private WinePairing winePairing;
-    //@Relationship(type = "HAS_INSTRUCTION")
-    //private List<AnalyzedInstruction> analyzedInstructions;
+    
+    @Relationship(type = "HAS_WINE_PAIRING", direction = Relationship.Direction.OUTGOING)
+    private WinePairing winePairing;
+    
+    @Relationship(type = "HAS_PREPARATION_INSTRUCTIONS", direction = Relationship.Direction.OUTGOING)
+    private List<AnalyzedInstruction> analyzedInstructions;
     // Constructors, getters, and setters
-
 	public Long getId() {
 		return Id;
 	}
@@ -304,5 +305,17 @@ public class RecipeDetails {
 	}
 	public void setExtendedIngredients(List<ExtendedIngredient> extendedIngredients) {
 		this.extendedIngredients = extendedIngredients;
+	}
+	public List<AnalyzedInstruction> getAnalyzedInstructions() {
+		return analyzedInstructions;
+	}
+	public void setAnalyzedInstructions(List<AnalyzedInstruction> analyzedInstructions) {
+		this.analyzedInstructions = analyzedInstructions;
+	}
+	public WinePairing getWinePairing() {
+		return winePairing;
+	}
+	public void setWinePairing(WinePairing winePairing) {
+		this.winePairing = winePairing;
 	}
 }

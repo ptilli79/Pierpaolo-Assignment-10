@@ -3,7 +3,7 @@ package com.projects.cavany.dto;
 import java.util.List;
 
 public class WinePairingDTO {
-
+	
     private List<String> pairedWines;
     private String pairingText;
     private List<ProductMatchDTO> productMatches;

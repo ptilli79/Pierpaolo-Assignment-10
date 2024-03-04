@@ -2,6 +2,8 @@ package com.projects.cavany.dto;
 
 import java.util.List;
 
+
+
 public class AnalyzedInstructionDTO {
 
     private String name;
@@ -20,7 +22,4 @@ public class AnalyzedInstructionDTO {
 	public void setSteps(List<StepDTO> steps) {
 		this.steps = steps;
 	}
-    
-    
-
 }

@@ -6,10 +6,12 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,21 +34,32 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.projects.cavany.domain.AnalyzedInstruction;
+import com.projects.cavany.domain.Equipment;
 import com.projects.cavany.domain.ExtendedIngredient;
-import com.projects.cavany.domain.Measures;
+import com.projects.cavany.domain.Ingredient;
 import com.projects.cavany.domain.MetricSystem;
+import com.projects.cavany.domain.ProductMatch;
 import com.projects.cavany.domain.RecipeDetails;
+import com.projects.cavany.domain.Step;
+import com.projects.cavany.domain.WinePairing;
+import com.projects.cavany.dto.AnalyzedInstructionDTO;
 import com.projects.cavany.dto.BulkRecipeDetailsDTO;
 import com.projects.cavany.dto.ComplexSearchResultItemDTO;
 import com.projects.cavany.dto.ComplexSearchResultsDTO;
 import com.projects.cavany.dto.DailyPlanner;
+import com.projects.cavany.dto.EquipmentDTO;
 import com.projects.cavany.dto.ExtendedIngredientDTO;
+import com.projects.cavany.dto.IngredientDTO;
 import com.projects.cavany.dto.Meal;
 import com.projects.cavany.dto.MeasuresDTO;
+import com.projects.cavany.dto.ProductMatchDTO;
 import com.projects.cavany.dto.RandomSearchResponse;
 import com.projects.cavany.dto.RecipeDetailsDTO;
+import com.projects.cavany.dto.StepDTO;
 import com.projects.cavany.dto.WeeklyPlanner;
 import com.projects.cavany.dto.WeeklyPlannerResponse;
+import com.projects.cavany.dto.WinePairingDTO;
 import com.projects.cavany.repository.DailyPlannerRepository;
 import com.projects.cavany.repository.ExtendedIngredientRepositoryNeo4j;
 import com.projects.cavany.repository.RecipeDetailsRepository;
@@ -88,10 +101,18 @@ public class MealPlannerResponseController {
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
-    private static final int maxIds = 5000;
+    private static final int maxIds = 100000;
     private static final int batchSize = 50;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
+    private final List<String> diets = Arrays.asList("Whole30"); // You can add more diets as needed
+    private final Map<String, List<String>> excludedIngredientsByCategory = new HashMap<>();
 
+    // Constructor or @PostConstruct method
+    public MealPlannerResponseController() {
+        excludedIngredientsByCategory.put("Sugar", Arrays.asList("sugar", "high fructose corn syrup", "agave nectar"));
+        excludedIngredientsByCategory.put("Fats", Arrays.asList("butter", "margarine", "lard"));
+        // Add more categories as necessary
+    }
 	
 	//@SuppressWarnings("unchecked")
 	@GetMapping("/mealplanner/week")
@@ -307,10 +328,10 @@ public class MealPlannerResponseController {
 	    public void fetchRecipes() throws IOException {
 	        RestTemplate restTemplate = new RestTemplate();
 	        int requestsMade = 0;
+	        AtomicInteger recipesSaved = new AtomicInteger();
 
 	        // Fetch existing recipe IDs from Neo4j
-	        Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAll().stream()
-	        	    .map(RecipeDetails::getId)
+	        Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAllIds().stream()
 	        	    .collect(Collectors.toSet());
 	        
 	        Optional<Long> maxIdInDb = recipeDetailsRepositoryNeo4j.findMaxId();
@@ -343,11 +364,41 @@ public class MealPlannerResponseController {
 	            Arrays.stream(response.getBody()).forEach(recipeDetailsDTO -> {
 	                RecipeDetails recipe = convertToRecipeEntity(recipeDetailsDTO);
 	                recipeDetailsRepositoryNeo4j.save(recipe);
+	                recipesSaved.incrementAndGet(); // Increment recipes saved counter
+
+	                if (recipesSaved.get() % 500 == 0) { // After every 500 recipes saved
+	                    try {
+	                        System.out.println("Saved 500 recipes, pausing...");
+	                        Thread.sleep(10000); // Wait for 10 seconds
+	                    } catch (InterruptedException e) {
+	                        Thread.currentThread().interrupt();
+	                    }
+	                }
 	            });
 	            //generateRecipeService.generateRecipeCSV(recipeDetailsRepo.getAll(), recipesFilePath);
 	        }
 	    }   
 	    
+	    @GetMapping("/recipes/filtered")
+	    public ResponseEntity<?> fetchFilteredRecipes() {	  
+	        List<String> excludedIngredients = new ArrayList<>();
+
+	        // Add excluded ingredients based on predefined categories
+	        for (String category : excludedIngredientsByCategory.keySet()) {
+	            excludedIngredients.addAll(excludedIngredientsByCategory.get(category));
+	        }
+
+	        // Build the Cypher query dynamically based on the filters
+	        String cypherQuery = buildCypherQuery(diets, excludedIngredients);
+
+	        // Execute the Cypher query against your Neo4j database
+	        // Implement this part based on your application's needs
+	        // For now, just log the query
+	        System.out.println(cypherQuery);
+
+	        // Placeholder response, replace with actual query results
+	        return ResponseEntity.ok().build();
+	    }
 	    
 	@RequestMapping("/mealplanner/day")
 	public DailyPlanner getDayMeals(String targetCalories, String diet, String exclude){
@@ -474,12 +525,12 @@ public class MealPlannerResponseController {
 	        metricMetric.setAmount(measuresDto.getMetric().getAmount());
 	        metricMetric.setUnitShort(measuresDto.getMetric().getUnitShort());
 	        metricMetric.setUnitLong(measuresDto.getMetric().getUnitLong());
-	       
 
-	            // Now set the measures in ingredient
+	        // Now set the measures in ingredient
 	        ingredient.setUs(usMetric);
 	        ingredient.setMetric(metricMetric);
 	        }
+	        
 	        ingredient.setId(ingredientDTO.getId());
 	        ingredient.setAisle(ingredientDTO.getAisle());
 	        ingredient.setImage(ingredientDTO.getImage());
@@ -491,16 +542,115 @@ public class MealPlannerResponseController {
 	        ingredient.setAmount(ingredientDTO.getAmount());
 	        ingredient.setUnit(ingredientDTO.getUnit());
 	        ingredient.setMeta(ingredientDTO.getMeta());
-	        // Set relationship if necessary
-	        // ingredient.setRecipeDetails(associatedRecipeDetails); // Set this if you are associating with a RecipeDetails entity
-	        extendedIngredients.add(ingredient);
-
-	        //Insert here logic to convert MeasuresDto to Measures
 	        
+	        extendedIngredients.add(ingredient);	        
+	    }
+	    recipe.setExtendedIngredients(extendedIngredients);
+	    
+	 // Placeholder for new logic: Convert AnalyzedInstruction from DTO to Entity
+	    List<AnalyzedInstruction> analyzedInstructions = new ArrayList<>();
+	    for (AnalyzedInstructionDTO instructionDTO : dto.getAnalyzedInstructions()) {
+	        AnalyzedInstruction instruction = new AnalyzedInstruction();
+	        instruction.setName(instructionDTO.getName());
+
+	        List<Step> steps = new ArrayList<>();
+	        for (StepDTO stepDTO : instructionDTO.getSteps()) {
+	            Step step = new Step();
+	            step.setNumber(stepDTO.getNumber());
+	            step.setStep(stepDTO.getStep());
+
+	            // Convert ingredients and equipment
+	            List<Ingredient> ingredients = stepDTO.getIngredients().stream()
+	                .map(ingredientDTO -> convertToIngredientEntity(ingredientDTO))
+	                .collect(Collectors.toList());
+	            step.setIngredients(ingredients);
+
+	            List<Equipment> equipment = stepDTO.getEquipment().stream()
+	                .map(equipmentDTO -> convertToEquipmentEntity(equipmentDTO))
+	                .collect(Collectors.toList());
+	            step.setEquipment(equipment);
+
+	            steps.add(step);
+	        }
+	        instruction.setSteps(steps);
+	        analyzedInstructions.add(instruction);
+	    }
+	    recipe.setAnalyzedInstructions(analyzedInstructions);
+	    
+	    // Convert WinePairing from DTO to Entity
+	    WinePairingDTO winePairingDTO = dto.getWinePairing();
+	    if (winePairingDTO != null) {
+	        WinePairing winePairing = new WinePairing();
+	        winePairing.setPairedWines(winePairingDTO.getPairedWines());
+	        winePairing.setPairingText(winePairingDTO.getPairingText());
+
+	        List<ProductMatch> productMatches = new ArrayList<>();
+	        if (winePairingDTO.getProductMatches() != null) { // Check if product matches list is not null
+	            for (ProductMatchDTO productMatchDTO : winePairingDTO.getProductMatches()) {
+	                ProductMatch productMatch = convertToProductMatchEntity(productMatchDTO);
+	                productMatches.add(productMatch);
+	            }
+	        }
+	        winePairing.setProductMatches(productMatches);
+	        
+	        recipe.setWinePairing(winePairing);
+	    }
+	    
+	    return recipe;
+	}
+	
+	private String buildCypherQuery(List<String> diets, List<String> excludedIngredients) {
+	    StringBuilder query = new StringBuilder("MATCH (recipe:RecipeDetails) ");
+
+	    List<String> conditions = new ArrayList<>();
+	    if (!diets.isEmpty()) {
+	        conditions.add("ANY(diet IN recipe.diets WHERE diet IN [" + 
+	            diets.stream().map(diet -> "\"" + diet + "\"").collect(Collectors.joining(", ")) + "])");
 	    }
 
-	    recipe.setExtendedIngredients(extendedIngredients);
-	    return recipe;
+	    if (!excludedIngredients.isEmpty()) {
+	        conditions.add("NONE(ingredient IN recipe.ingredients WHERE ingredient.name IN [" + 
+	            excludedIngredients.stream().map(ingredient -> "\"" + ingredient + "\"").collect(Collectors.joining(", ")) + "])");
+	    }
+
+	    if (!conditions.isEmpty()) {
+	        query.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
+	    }
+
+	    query.append("RETURN recipe");
+	    return query.toString();
+	}
+	private Ingredient convertToIngredientEntity(IngredientDTO ingredientDTO) {
+	    Ingredient ingredient = new Ingredient();
+	    ingredient.setId(ingredientDTO.getId());
+	    ingredient.setName(ingredientDTO.getName());
+	    ingredient.setLocalizedName(ingredientDTO.getLocalizedName());
+	    ingredient.setImage(ingredientDTO.getImage());
+	    return ingredient;
+	}
+
+	private Equipment convertToEquipmentEntity(EquipmentDTO equipmentDTO) {
+	    Equipment equipment = new Equipment();
+	    equipment.setId(equipmentDTO.getId());
+	    equipment.setName(equipmentDTO.getName());
+	    equipment.setLocalizedName(equipmentDTO.getLocalizedName());
+	    equipment.setImage(equipmentDTO.getImage());
+	    return equipment;
+	}
+	
+	private ProductMatch convertToProductMatchEntity(ProductMatchDTO dto) {
+	    ProductMatch productMatch = new ProductMatch();
+	    productMatch.setId(dto.getId());
+	    productMatch.setTitle(dto.getTitle());
+	    productMatch.setDescription(dto.getDescription());
+	    productMatch.setPrice(dto.getPrice());
+	    productMatch.setImageUrl(dto.getImageUrl());
+	    productMatch.setAverageRating(dto.getAverageRating());
+	    productMatch.setRatingCount(dto.getRatingCount());
+	    productMatch.setScore(dto.getScore());
+	    productMatch.setLink(dto.getLink());
+	    // Add more fields if necessary
+	    return productMatch;
 	}
 }
 
