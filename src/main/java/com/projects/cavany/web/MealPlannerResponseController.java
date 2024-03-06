@@ -101,7 +101,7 @@ public class MealPlannerResponseController {
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
-    private static final int maxIds = 100000;
+    private static final int maxIds = 65000;
     private static final int batchSize = 50;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
     private final List<String> diets = Arrays.asList("Whole30"); // You can add more diets as needed
@@ -110,7 +110,17 @@ public class MealPlannerResponseController {
     // Constructor or @PostConstruct method
     public MealPlannerResponseController() {
         excludedIngredientsByCategory.put("Sugar", Arrays.asList("sugar", "high fructose corn syrup", "agave nectar"));
-        excludedIngredientsByCategory.put("Fats", Arrays.asList("butter", "margarine", "lard"));
+        excludedIngredientsByCategory.put("Fats", Arrays.asList("margarine", "lard", "avocado", "hass avocado", "avocado cubes", "avocados", "avocado mayo", "avocadoes"));
+        excludedIngredientsByCategory.put("Canned Goods", Arrays.asList(
+                "5 spice powder", "canned black beans", "canned diced tomatoes", "canned garbanzo beans",
+                "canned green chiles", "canned kidney beans", "canned mushrooms", "canned pinto beans",
+                "canned red kidney beans", "canned tomatoes", "canned tuna", "canned white beans",
+                "canned white cannellini beans"
+            ));
+        excludedIngredientsByCategory.put("Liquors", Arrays.asList("amaretto", "bourbon", "brandy", "beer",
+        		"champagne", "cognac", "gin", "grand marnier", "kahlua", "rum", "tequila", "vodka", "whiskey",
+        		"white wine", "red wine", "dry vermouth", "sweet vermouth", "scotch", "irish cream", 
+        		"marsala wine"));
         // Add more categories as necessary
     }
 	
@@ -380,25 +390,84 @@ public class MealPlannerResponseController {
 	    }   
 	    
 	    @GetMapping("/recipes/filtered")
-	    public ResponseEntity<?> fetchFilteredRecipes() {	  
-	        List<String> excludedIngredients = new ArrayList<>();
+	    public ResponseEntity<?> fetchFilteredRecipes(
+	            @RequestParam(required = false) List<String> diets,
+	            @RequestParam(required = false) List<String> excludedIngredientsFromRequest,
+	            @RequestParam(defaultValue = "true") boolean glutenFree) {
 
-	        // Add excluded ingredients based on predefined categories
+	        // Prepare the lists of excluded ingredients from request and constructor categories
+	        List<String> allExcludedIngredients = new ArrayList<>();
 	        for (String category : excludedIngredientsByCategory.keySet()) {
-	            excludedIngredients.addAll(excludedIngredientsByCategory.get(category));
+	            allExcludedIngredients.addAll(excludedIngredientsByCategory.get(category));
+	        }
+	        if (excludedIngredientsFromRequest != null) {
+	            allExcludedIngredients.addAll(excludedIngredientsFromRequest);
+	        }
+	        
+	        // Default diets list if not provided
+	        if (diets == null || diets.isEmpty()) {
+	            diets = List.of("whole 30"); // Default diet if none provided
+	        }
+	     // Prepare query strings for logging
+	        String dietsString = String.join("\", \"", diets);
+	        String excludedIngredientsString = allExcludedIngredients.stream()
+	                .map(String::trim)
+	                .collect(Collectors.joining("\", \""));
+
+	     // Print out the Cypher query for testing
+	        String printableCypherQuery = String.format(
+	            "MATCH (recipe:RecipeDetails)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
+	            "WHERE ANY(d IN ['%s'] WHERE d IN recipe.diets) AND recipe.glutenFree = %b " +
+	            "WITH recipe, COLLECT(DISTINCT toLower(ingredient.name)) AS ingredients " +
+	            "OPTIONAL MATCH (recipe)-[:HAS_PREPARATION_INSTRUCTIONS]->(:AnalyzedInstruction)-[:HAS_STEPS]->(:Step)-[:HAS_INGREDIENTS]->(stepIngredient:Ingredient) " +
+	            "WITH recipe, ingredients, COLLECT(DISTINCT toLower(stepIngredient.name)) AS stepIngredients " +
+	            "WITH recipe, ingredients + stepIngredients AS allIngredientsList " +
+	            "UNWIND allIngredientsList AS ingredientNames " +
+	            "WITH recipe, COLLECT(DISTINCT ingredientNames) AS distinctIngredients " +
+	            "WHERE NONE(ing IN distinctIngredients WHERE ing IN ['%s']) " +
+	            "RETURN DISTINCT recipe.Id",
+	            dietsString, glutenFree, excludedIngredientsString
+	        );
+	        
+	        //String formattedDietsString = String.format("[\"%s\"]", String.join("\", \"", diets));
+	        //String formattedAllExcludedIngredientsString = String.format("[\"%s\"]", String.join("\", \"", allExcludedIngredients));
+	        
+	        System.out.println("Cypher Query: " + printableCypherQuery);
+	        //System.out.println("Diets: " + formattedDietsString);
+	        //System.out.println("GlutenFree: " + glutenFree);
+	        //System.out.println("Excluded Ingredients: " + formattedAllExcludedIngredientsString);
+
+	        // Execute the query to fetch filtered recipe IDs
+	        // Implementation depends on your Neo4j repository setup
+	        // Fetch filtered recipe IDs from the repository
+	        List<Long> filteredRecipeIds = recipeDetailsRepositoryNeo4j.findFilteredRecipes(
+	        		diets, glutenFree, allExcludedIngredients);
+
+	        // Handle no results
+	        if (filteredRecipeIds.isEmpty()) {
+	            return ResponseEntity.ok(Collections.emptyList());
 	        }
 
-	        // Build the Cypher query dynamically based on the filters
-	        String cypherQuery = buildCypherQuery(diets, excludedIngredients);
+	        // Fetch recipe details for the filtered IDs (limit results as needed, assuming this method exists)
+	        List<RecipeDetails> limitedRecipes = recipeDetailsRepositoryNeo4j.findLimitedRecipesByIds(filteredRecipeIds);
 
-	        // Execute the Cypher query against your Neo4j database
-	        // Implement this part based on your application's needs
-	        // For now, just log the query
-	        System.out.println(cypherQuery);
+	        // Convert the RecipeDetails entities into a simpler format
+	        // This step depends on how you want to display the recipes in your application
+	        List<Map<String, Object>> recipesInfo = limitedRecipes.stream()
+	                .map(recipe -> {
+	                    Map<String, Object> recipeMap = new HashMap<>();
+	                    // Map the necessary fields from RecipeDetails to recipeMap
+	                    recipeMap.put("id", recipe.getId());
+	                    recipeMap.put("title", recipe.getTitle());
+	                    // Add other fields as needed...
+	                    return recipeMap;
+	                })
+	                .collect(Collectors.toList());
 
-	        // Placeholder response, replace with actual query results
-	        return ResponseEntity.ok().build();
+	        // Return the limited recipes info
+	        return ResponseEntity.ok(recipesInfo);
 	    }
+
 	    
 	@RequestMapping("/mealplanner/day")
 	public DailyPlanner getDayMeals(String targetCalories, String diet, String exclude){
