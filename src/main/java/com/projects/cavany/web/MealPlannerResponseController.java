@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,22 +17,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -51,13 +50,11 @@ import com.projects.cavany.dto.DailyPlanner;
 import com.projects.cavany.dto.EquipmentDTO;
 import com.projects.cavany.dto.ExtendedIngredientDTO;
 import com.projects.cavany.dto.IngredientDTO;
-import com.projects.cavany.dto.Meal;
 import com.projects.cavany.dto.MeasuresDTO;
 import com.projects.cavany.dto.ProductMatchDTO;
 import com.projects.cavany.dto.RandomSearchResponse;
 import com.projects.cavany.dto.RecipeDetailsDTO;
 import com.projects.cavany.dto.StepDTO;
-import com.projects.cavany.dto.WeeklyPlanner;
 import com.projects.cavany.dto.WeeklyPlannerResponse;
 import com.projects.cavany.dto.WinePairingDTO;
 import com.projects.cavany.repository.DailyPlannerRepository;
@@ -67,6 +64,7 @@ import com.projects.cavany.repository.RecipeDetailsRepositoryNeo4j;
 import com.projects.cavany.repository.WeeklyPlannerRepository;
 import com.projects.cavany.service.GenerateRecipeService;
 import com.projects.cavany.service.MealPlannerService;
+import org.springframework.web.client.HttpServerErrorException;
 
 //import ch.qos.logback.classic.Logger;
 @RestController
@@ -101,28 +99,53 @@ public class MealPlannerResponseController {
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
-    private static final int maxIds = 65000;
+    private static final int maxIds = 125000;
     private static final int batchSize = 50;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
     private final List<String> diets = Arrays.asList("Whole30"); // You can add more diets as needed
     private final Map<String, List<String>> excludedIngredientsByCategory = new HashMap<>();
 
     // Constructor or @PostConstruct method
+ // Constructor or @PostConstruct method
     public MealPlannerResponseController() {
-        excludedIngredientsByCategory.put("Sugar", Arrays.asList("sugar", "high fructose corn syrup", "agave nectar"));
-        excludedIngredientsByCategory.put("Fats", Arrays.asList("margarine", "lard", "avocado", "hass avocado", "avocado cubes", "avocados", "avocado mayo", "avocadoes"));
+        excludedIngredientsByCategory.put("Sugar", Arrays.asList(
+            "sugar", "high fructose corn syrup", "agave nectar", "stevia", "molasses", "maple syrup", "confectioner's swerve", 
+            "sugar syrup", "sukrin sweetener", "sweet tea"));
+
+        excludedIngredientsByCategory.put("Fats", Arrays.asList(
+            "margarine", "lard", "avocado", "hass avocado", "avocado cubes", "avocados", "avocado mayo", "avocadoes", 
+            "bacon fat", "butter", "buttermilk", "coconut butter", "coconut cream", "duck fat", "light butter"));
+
         excludedIngredientsByCategory.put("Canned Goods", Arrays.asList(
-                "5 spice powder", "canned black beans", "canned diced tomatoes", "canned garbanzo beans",
-                "canned green chiles", "canned kidney beans", "canned mushrooms", "canned pinto beans",
-                "canned red kidney beans", "canned tomatoes", "canned tuna", "canned white beans",
-                "canned white cannellini beans"
-            ));
-        excludedIngredientsByCategory.put("Liquors", Arrays.asList("amaretto", "bourbon", "brandy", "beer",
-        		"champagne", "cognac", "gin", "grand marnier", "kahlua", "rum", "tequila", "vodka", "whiskey",
-        		"white wine", "red wine", "dry vermouth", "sweet vermouth", "scotch", "irish cream", 
-        		"marsala wine"));
-        // Add more categories as necessary
+            "5 spice powder", "canned black beans", "canned diced tomatoes", "canned garbanzo beans", "canned green chiles", 
+            "canned kidney beans", "canned mushrooms", "canned pinto beans", "canned red kidney beans", "canned tomatoes", 
+            "canned tuna", "canned white beans", "canned white cannellini beans", "cannellini beans", "Pork & Beans"));
+
+        excludedIngredientsByCategory.put("Liquors", Arrays.asList(
+            "amaretto", "bourbon", "brandy", "beer", "champagne", "cognac", "gin", "grand marnier", "kahlua", "rum", 
+            "tequila", "vodka", "whiskey", "white wine", "red wine", "dry vermouth", "sweet vermouth", "scotch", 
+            "irish cream", "marsala wine", "beer", "ginger beer", "liquor", "vermouth", "wine", "sparkling wine"));
+
+        excludedIngredientsByCategory.put("Baking Goods", Arrays.asList(
+            "angel food cake mix", "baking bar", "biscuit mix", "biscuits", "bittersweet chocolate", "brownie mix", 
+            "candy canes", "candy coating", "candy melts", "chocolate ice cream", "cinnamon stick", "cocoa nibs", 
+            "cocoa powder", "corn bread mix", "dark chocolate candy bars", "dessert oats", "flour", "flour tortillas", 
+            "fudge", "fudge topping", "gelatin", "gf chocolate cake mix", "graham cracker crumbs", "graham cracker pie crust", 
+            "instant chocolate pudding mix", "instant espresso powder", "instant lemon pudding mix", "instant yeast", 
+            "marshmallow fluff", "marshmallows", "pie crust", "puff pastry", "self-rising flour", "shortbread cookies", 
+            "shortcrust pastry", "white cake mix", "yellow cake mix"));
+
+        // Add more categories based on the new ingredients
+        excludedIngredientsByCategory.put("Spices & Seasonings", Arrays.asList(
+            "angostura bitters", "black pepper", "cajun seasoning", "caraway seed", "cardamom pods", "celery salt", 
+            "celery seed", "chana dal", "cracked pepper", "dill", "dried dill", "fenugreek leaf", "fenugreek seeds", 
+            "ground lamb", "ground mace", "ground veal", "herbes de provence", "hot dog", "old bay seasoning", 
+            "peppercorns", "red pepper flakes", "rub", "rum extract", "saffron threads", "sage", "sage leaves", 
+            "saltine crackers", "seasoned rice vinegar", "sesame seeds", "summer savory", "sweet paprika", "taco seasoning mix"));
+
+        // Continue adding new categories as needed
     }
+
 	
 	//@SuppressWarnings("unchecked")
 	@GetMapping("/mealplanner/week")
@@ -204,30 +227,7 @@ public class MealPlannerResponseController {
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(randomSearchResponse);
 	    }
 	}
-
-
-
-//	        try {
-	            // Iterate through the received list of recipes and save each one
-//	            for (RecipeDetailsDTO recipe : recipes) {
-	                // Check if the recipe with this ID exists in the repository
-//	                Long recipeId = recipe.getId();
-//	                RecipeDetailsDTO existingRecipe = recipeDetailsRepository.getRecipeById(recipeId);
-
-//	                if (existingRecipe == null) {
-	                    // Recipe with the given ID doesn't exist in the repository, save it
-//	                    recipeDetailsRepository.save(recipe);
-//	                }
-//	            }
-//	            return ResponseEntity.ok("Recipes saved successfully.");
-//	        } catch (Exception e) {
-//	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving recipes.");
-//	        }
-
-	
-	
-	
-	
+		
 	@RequestMapping("/complex/search")
 	public ComplexSearchResultsDTO getSearch(String targetCalories, String diet, String exclude, Integer number, Integer offset) throws IOException {
 	    RestTemplate rt = new RestTemplate();
@@ -334,66 +334,89 @@ public class MealPlannerResponseController {
 	        return response;
 	    }
 	
+
+
 	    @GetMapping("/recipes/fetchRecipes")
 	    public void fetchRecipes() throws IOException {
 	        RestTemplate restTemplate = new RestTemplate();
 	        int requestsMade = 0;
 	        AtomicInteger recipesSaved = new AtomicInteger();
-
-	        // Fetch existing recipe IDs from Neo4j
-	        Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAllIds().stream()
-	        	    .collect(Collectors.toSet());
-	        
+	        Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAllIds().stream().collect(Collectors.toSet());
 	        Optional<Long> maxIdInDb = recipeDetailsRepositoryNeo4j.findMaxId();
 	        long startId = maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0;
+	        final int maxRetries = 3;
 
 	        for (long i = startId; i < maxIds; i += batchSize) {
 	            StringBuilder ids = new StringBuilder();
 	            for (long j = i; j < i + batchSize && j < maxIds; j++) {
-	                if (!existingIds.contains((long) j)) {
+	                if (!existingIds.contains(j)) {
 	                    if (ids.length() > 0) ids.append(",");
 	                    ids.append(j);
 	                }
 	            }
-	            if (ids.length() == 0) continue; // Skip API call if all IDs exist
+	            if (ids.length() == 0) continue;
 
 	            String url = uriString.toStringRecipeBulkInformation() + "?ids=" + ids.toString() + "&apiKey=" + uriString.getApiKey();
-	            if (requestsMade >= maxRequestsPerSecond) {
-	                try {
-	                    Thread.sleep(rateLimitIntervalMillis);
-	                } catch (InterruptedException e) {
-	                    Thread.currentThread().interrupt();
-	                }
-	                requestsMade = 0;
-	            }
-	            System.out.println(url);
-	            ResponseEntity<BulkRecipeDetailsDTO[]> response = restTemplate.getForEntity(url, BulkRecipeDetailsDTO[].class);
-	            requestsMade++;
+	            ResponseEntity<BulkRecipeDetailsDTO[]> response = null;
+	            int retryCount = 0;
 
-	            // Handle the response - save to repository
-	            Arrays.stream(response.getBody()).forEach(recipeDetailsDTO -> {
-	                RecipeDetails recipe = convertToRecipeEntity(recipeDetailsDTO);
-	                recipeDetailsRepositoryNeo4j.save(recipe);
-	                recipesSaved.incrementAndGet(); // Increment recipes saved counter
-
-	                if (recipesSaved.get() % 500 == 0) { // After every 500 recipes saved
+	            while (retryCount < maxRetries) {
+	                if (requestsMade >= maxRequestsPerSecond) {
 	                    try {
-	                        System.out.println("Saved 500 recipes, pausing...");
-	                        Thread.sleep(10000); // Wait for 10 seconds
+	                        Thread.sleep(rateLimitIntervalMillis);
 	                    } catch (InterruptedException e) {
 	                        Thread.currentThread().interrupt();
 	                    }
+	                    requestsMade = 0;
 	                }
-	            });
-	            //generateRecipeService.generateRecipeCSV(recipeDetailsRepo.getAll(), recipesFilePath);
+
+	                try {
+	                    System.out.println("Requesting URL: " + url);
+	                    response = restTemplate.getForEntity(url, BulkRecipeDetailsDTO[].class);
+	                    requestsMade++;
+	                    break; // Request successful
+	                } catch (ResourceAccessException | HttpClientErrorException | HttpServerErrorException e) {
+	                    System.err.println("Error accessing URL: " + url + ". Error: " + e.getMessage());
+	                    retryCount++;
+	                    if (retryCount >= maxRetries) {
+	                        System.err.println("Max retry attempts reached for URL: " + url);
+	                        break;
+	                    }
+	                    try {
+	                        System.out.println("Retrying after error... (" + retryCount + "/" + maxRetries + ")");
+	                        Thread.sleep(10000); // Wait for 10 seconds before retrying
+	                    } catch (InterruptedException ex) {
+	                        Thread.currentThread().interrupt();
+	                    }
+	                }
+	            }
+
+	            if (response != null && response.getBody() != null) {
+	                Arrays.stream(response.getBody()).forEach(recipeDetailsDTO -> {
+	                    RecipeDetails recipe = convertToRecipeEntity(recipeDetailsDTO);
+	                    recipeDetailsRepositoryNeo4j.save(recipe);
+	                    recipesSaved.incrementAndGet();
+
+	                    if (recipesSaved.get() % 500 == 0) {
+	                        try {
+	                            System.out.println("Saved 500 recipes, pausing...");
+	                            Thread.sleep(10000); // Wait for 10 seconds
+	                        } catch (InterruptedException e) {
+	                            Thread.currentThread().interrupt();
+	                        }
+	                    }
+	                });
+	            }
 	        }
-	    }   
+	    }
+   
 	    
 	    @GetMapping("/recipes/filtered")
-	    public ResponseEntity<?> fetchFilteredRecipes(
+	    public ResponseEntity<Map<String, Object>> fetchFilteredRecipes(
 	            @RequestParam(required = false) List<String> diets,
 	            @RequestParam(required = false) List<String> excludedIngredientsFromRequest,
-	            @RequestParam(defaultValue = "true") boolean glutenFree) {
+	            @RequestParam(defaultValue = "true") boolean glutenFree,
+	            @RequestParam(defaultValue = "7") int days) {
 
 	        // Prepare the lists of excluded ingredients from request and constructor categories
 	        List<String> allExcludedIngredients = new ArrayList<>();
@@ -409,33 +432,33 @@ public class MealPlannerResponseController {
 	            diets = List.of("whole 30"); // Default diet if none provided
 	        }
 	     // Prepare query strings for logging
-	        String dietsString = String.join("\", \"", diets);
-	        String excludedIngredientsString = allExcludedIngredients.stream()
+	        String dietsPrintable = "[\"" + String.join("\", \"", diets) + "\"]";
+	        String excludedIngredientsPrintable = "[\"" + allExcludedIngredients.stream()
 	                .map(String::trim)
-	                .collect(Collectors.joining("\", \""));
+	                .collect(Collectors.joining("\", \"")) + "\"]";
 
-	     // Print out the Cypher query for testing
+	        // Print out the Cypher query for testing
 	        String printableCypherQuery = String.format(
 	            "MATCH (recipe:RecipeDetails)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
-	            "WHERE ANY(d IN ['%s'] WHERE d IN recipe.diets) AND recipe.glutenFree = %b " +
-	            "WITH recipe, COLLECT(DISTINCT toLower(ingredient.name)) AS ingredients " +
+	            "WHERE ANY(d IN %s WHERE d IN recipe.diets) AND recipe.glutenFree = %b " +
+	            "WITH recipe, COLLECT(DISTINCT toLower(ingredient.name)) AS rawIngredients, " +
+	            "COLLECT(DISTINCT toLower(ingredient.nameClean)) AS cleanIngredients " +
 	            "OPTIONAL MATCH (recipe)-[:HAS_PREPARATION_INSTRUCTIONS]->(:AnalyzedInstruction)-[:HAS_STEPS]->(:Step)-[:HAS_INGREDIENTS]->(stepIngredient:Ingredient) " +
-	            "WITH recipe, ingredients, COLLECT(DISTINCT toLower(stepIngredient.name)) AS stepIngredients " +
-	            "WITH recipe, ingredients + stepIngredients AS allIngredientsList " +
+	            "WITH recipe, rawIngredients, cleanIngredients, " +
+	            "COLLECT(DISTINCT toLower(stepIngredient.name)) AS stepRawIngredients, " +
+	            "COLLECT(DISTINCT toLower(stepIngredient.nameClean)) AS stepCleanIngredients " +
+	            "WITH recipe, rawIngredients + cleanIngredients + stepRawIngredients + stepCleanIngredients AS allIngredientsList " +
 	            "UNWIND allIngredientsList AS ingredientNames " +
 	            "WITH recipe, COLLECT(DISTINCT ingredientNames) AS distinctIngredients " +
-	            "WHERE NONE(ing IN distinctIngredients WHERE ing IN ['%s']) " +
+	            "WHERE NONE(ing IN distinctIngredients WHERE ing IN %s) " +
 	            "RETURN DISTINCT recipe.Id",
-	            dietsString, glutenFree, excludedIngredientsString
+	            dietsPrintable, glutenFree, excludedIngredientsPrintable
 	        );
 	        
-	        //String formattedDietsString = String.format("[\"%s\"]", String.join("\", \"", diets));
-	        //String formattedAllExcludedIngredientsString = String.format("[\"%s\"]", String.join("\", \"", allExcludedIngredients));
-	        
 	        System.out.println("Cypher Query: " + printableCypherQuery);
-	        //System.out.println("Diets: " + formattedDietsString);
-	        //System.out.println("GlutenFree: " + glutenFree);
-	        //System.out.println("Excluded Ingredients: " + formattedAllExcludedIngredientsString);
+	        System.out.println("Diets: " + diets);
+	        System.out.println("GlutenFree: " + glutenFree);
+	        System.out.println("Excluded Ingredients: " + allExcludedIngredients);
 
 	        // Execute the query to fetch filtered recipe IDs
 	        // Implementation depends on your Neo4j repository setup
@@ -443,29 +466,56 @@ public class MealPlannerResponseController {
 	        List<Long> filteredRecipeIds = recipeDetailsRepositoryNeo4j.findFilteredRecipes(
 	        		diets, glutenFree, allExcludedIngredients);
 
-	        // Handle no results
+	        // If no recipes match the filters, return an empty meal plan
 	        if (filteredRecipeIds.isEmpty()) {
-	            return ResponseEntity.ok(Collections.emptyList());
+	            return ResponseEntity.ok(Map.of("week", Collections.emptyMap()));
 	        }
 
 	        // Fetch recipe details for the filtered IDs (limit results as needed, assuming this method exists)
 	        List<RecipeDetails> limitedRecipes = recipeDetailsRepositoryNeo4j.findLimitedRecipesByIds(filteredRecipeIds);
+	        
+	     // Initialize daysOfWeek array
+	        String[] daysOfWeek = {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
 
-	        // Convert the RecipeDetails entities into a simpler format
-	        // This step depends on how you want to display the recipes in your application
-	        List<Map<String, Object>> recipesInfo = limitedRecipes.stream()
-	                .map(recipe -> {
-	                    Map<String, Object> recipeMap = new HashMap<>();
-	                    // Map the necessary fields from RecipeDetails to recipeMap
-	                    recipeMap.put("id", recipe.getId());
-	                    recipeMap.put("title", recipe.getTitle());
-	                    // Add other fields as needed...
-	                    return recipeMap;
-	                })
-	                .collect(Collectors.toList());
 
-	        // Return the limited recipes info
-	        return ResponseEntity.ok(recipesInfo);
+	        // Calculate how many recipes are needed based on the number of days and meals per day
+	        int mealsPerDay = 3; // This could be adjusted as needed
+	        int totalMealsNeeded = days * mealsPerDay;
+
+	        // Select a subset of recipes if there are more recipes than needed
+	        List<RecipeDetails> selectedRecipes;
+	        if (limitedRecipes.size() > totalMealsNeeded) {
+	            selectedRecipes = new ArrayList<>(limitedRecipes.subList(0, totalMealsNeeded));
+	        } else {
+	            selectedRecipes = new ArrayList<>(limitedRecipes);
+	        }
+
+	     // Initialize recipeIterator from selectedRecipes
+	        Iterator<RecipeDetails> recipeIterator = selectedRecipes.iterator();
+
+	        // Logic to distribute selected recipes across the specified days
+	        Map<String, Object> weeklyMealPlan = new LinkedHashMap<>();
+
+	        for (int dayIndex = 0; dayIndex < days; dayIndex++) {
+	            List<Map<String, Object>> mealsForDay = new ArrayList<>();
+	            for (int j = 0; j < mealsPerDay && recipeIterator.hasNext(); j++) {
+	                RecipeDetails recipe = recipeIterator.next();
+	                Map<String, Object> meal = new HashMap<>();
+	                meal.put("id", recipe.getId());
+	                meal.put("readyInMinutes", recipe.getReadyInMinutes());
+	                meal.put("sourceUrl", recipe.getSourceUrl());
+	                meal.put("servings", recipe.getServings());
+	                meal.put("title", recipe.getTitle());
+	                meal.put("imageType", recipe.getImageType());
+	                mealsForDay.add(meal);
+	            }
+	            String dayOfWeek = daysOfWeek[dayIndex % 7]; // Use modulo to cycle through days of the week
+	            weeklyMealPlan.put(dayOfWeek + (dayIndex / 7 + 1), Map.of("meals", mealsForDay)); // Append week number if more than 7 days
+	        }
+
+
+	        // Wrap the weekly meal plan in a 'week' object and return
+	        return ResponseEntity.ok(Map.of("week", weeklyMealPlan));
 	    }
 
 	    
@@ -504,6 +554,7 @@ public class MealPlannerResponseController {
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 	    }
 	}
+	
 
 	
 	@GetMapping("/mealplanner/weeklyMealsRepo")
@@ -586,14 +637,22 @@ public class MealPlannerResponseController {
 	        if (measuresDto != null) {
 	           
 	        MetricSystem usMetric = new MetricSystem();
-	        usMetric.setAmount(measuresDto.getUs().getAmount());
-	        usMetric.setUnitShort(measuresDto.getUs().getUnitShort());
-	        usMetric.setUnitLong(measuresDto.getUs().getUnitLong());
+	        if (measuresDto.getUs() != null) {
+	        	Double usAmount = measuresDto.getUs().getAmount(); // Now you're safely accessing getAmount
+	            usMetric.setAmount((usAmount != null) ? usAmount.doubleValue() : 0.0); // Default to 0.0 if null
+	        	//usMetric.setAmount(measuresDto.getUs().getAmount());
+	        	usMetric.setUnitShort(measuresDto.getUs().getUnitShort());
+	        	usMetric.setUnitLong(measuresDto.getUs().getUnitLong());
+	        }
 	           
 	        MetricSystem metricMetric = new MetricSystem();
-	        metricMetric.setAmount(measuresDto.getMetric().getAmount());
-	        metricMetric.setUnitShort(measuresDto.getMetric().getUnitShort());
-	        metricMetric.setUnitLong(measuresDto.getMetric().getUnitLong());
+	        if (measuresDto.getMetric() != null) {
+	        	Double metricAmount = measuresDto.getMetric().getAmount(); // Again, safely accessing getAmount
+	            metricMetric.setAmount((metricAmount != null) ? metricAmount.doubleValue() : 0.0); // Default to 0.0 if null
+	        	//metricMetric.setAmount(measuresDto.getMetric().getAmount());
+	        	metricMetric.setUnitShort(measuresDto.getMetric().getUnitShort());
+	        	metricMetric.setUnitLong(measuresDto.getMetric().getUnitLong());
+	        }
 
 	        // Now set the measures in ingredient
 	        ingredient.setUs(usMetric);

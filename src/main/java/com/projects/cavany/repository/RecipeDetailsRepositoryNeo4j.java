@@ -22,15 +22,18 @@ public interface RecipeDetailsRepositoryNeo4j extends Neo4jRepository<RecipeDeta
 	
 	@Query("MATCH (recipe:RecipeDetails)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
 		       "WHERE ANY(d IN $diets WHERE d IN recipe.diets) AND recipe.glutenFree = $glutenFree " +
-		       "WITH recipe, COLLECT(DISTINCT toLower(ingredient.nameClean)) AS ingredients " +
+		       "WITH recipe, COLLECT(DISTINCT toLower(ingredient.name)) AS rawIngredients, " +
+		       "COLLECT(DISTINCT toLower(ingredient.nameClean)) AS cleanIngredients " +
 		       "OPTIONAL MATCH (recipe)-[:HAS_PREPARATION_INSTRUCTIONS]->(:AnalyzedInstruction)-[:HAS_STEPS]->(:Step)-[:HAS_INGREDIENTS]->(stepIngredient:Ingredient) " +
-		       "WITH recipe, ingredients, COLLECT(DISTINCT toLower(stepIngredient.name)) AS stepIngredients " +
-		       "WITH recipe, ingredients + stepIngredients AS allIngredientsList " +
+		       "WITH recipe, rawIngredients, cleanIngredients, COLLECT(DISTINCT toLower(stepIngredient.name)) AS stepRawIngredients, " +
+		       "COLLECT(DISTINCT toLower(stepIngredient.nameClean)) AS stepCleanIngredients " +
+		       "WITH recipe, rawIngredients + cleanIngredients + stepRawIngredients + stepCleanIngredients AS allIngredientsList " +
 		       "UNWIND allIngredientsList AS ingredientNames " +
 		       "WITH recipe, COLLECT(DISTINCT ingredientNames) AS distinctIngredients " +
-		       "WHERE NONE(ing IN distinctIngredients WHERE ing IN $excludedIngredients ) " +
-		       "RETURN DISTINCT recipe.Id AS id")
-	List<Long> findFilteredRecipes(List<String> diets, boolean glutenFree, List<String> excludedIngredients);
+		       "WHERE NONE(ing IN distinctIngredients WHERE ing IN $excludedIngredients) " +
+		       "RETURN DISTINCT recipe.Id")
+		List<Long> findFilteredRecipes(List<String> diets, boolean glutenFree, List<String> excludedIngredients);
+
 
     @Query("MATCH (recipe:RecipeDetails) WHERE recipe.Id IN $recipeIds " +
             "RETURN recipe ")

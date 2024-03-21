@@ -1,27 +1,35 @@
 package com.projects.cavany.dto;
 
+import org.springframework.lang.Nullable;
+
 public class UsMetricDTO {
-    private double amount;
+    private Double amount;
     private String unitShort;
     private String unitLong;
     
+
     // Getters and setters for all fields
-	public double getAmount() {
-		return amount;
-	}
-	public void setAmount(double amount) {
-		this.amount = amount;
-	}
-	public String getUnitShort() {
-		return unitShort;
-	}
-	public void setUnitShort(String unitShort) {
-		this.unitShort = unitShort;
-	}
-	public String getUnitLong() {
-		return unitLong;
-	}
-	public void setUnitLong(String unitLong) {
-		this.unitLong = unitLong;
-	} 
+    @Nullable // Indicates this can be null
+    public Double getAmount() { // Changed return type to Double
+        return amount;
+    }
+    public void setAmount(Double amount) { // Allow null values
+        this.amount = amount;
+    }
+
+    @Nullable // Indicates this can be null
+    public String getUnitShort() {
+        return unitShort;
+    }
+    public void setUnitShort(String unitShort) {
+        this.unitShort = unitShort;
+    }
+
+    @Nullable // Indicates this can be null
+    public String getUnitLong() {
+        return unitLong;
+    }
+    public void setUnitLong(String unitLong) {
+        this.unitLong = unitLong;
+    } 
 }

@@ -1,0 +1,90 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+.preference-group {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.container h1 {
+    margin-bottom: 40px;
+}
+
+.preference {
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    background: #F0F0F0;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+/* Update the hover effect to exclude disabled preferences */
+.preference:not(.active):not(.disabled):hover {
+    background-color: #04AA6D;
+    color: white;
+}
+
+.preference.active {
+    background-color: #04AA6D;
+    color: white;
+    transform: scale(1.1);
+}
+
+.misaligned {
+    margin-top: 40px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 50px 10px;
+}
+
+.preferences {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#submit-preferences {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    font-size: 20px;
+    border-radius: 20px;
+    background-color: grey;
+    color: white;
+    cursor: not-allowed;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#submit-preferences:enabled {
+    background-color: magenta;
+    cursor: pointer;
+}
+
+#submit-preferences:hover {
+    background-color: #555;
+}
+
+.preference.disabled {
+    background-color: grey;
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+#submit-preferences .fas {
+    margin-left: 10px;
+    font-size: 16px;
+}
