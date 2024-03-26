@@ -21,7 +21,7 @@ public interface RecipeDetailsRepositoryNeo4j extends Neo4jRepository<RecipeDeta
 	Set<Long> findAllIds();
 	
 	@Query("MATCH (recipe:RecipeDetails)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
-		       "WHERE ANY(d IN $diets WHERE d IN recipe.diets) AND recipe.glutenFree = $glutenFree " +
+		       "WHERE ALL(d IN $diets WHERE d IN recipe.diets)" +
 		       "WITH recipe, COLLECT(DISTINCT toLower(ingredient.name)) AS rawIngredients, " +
 		       "COLLECT(DISTINCT toLower(ingredient.nameClean)) AS cleanIngredients " +
 		       "OPTIONAL MATCH (recipe)-[:HAS_PREPARATION_INSTRUCTIONS]->(:AnalyzedInstruction)-[:HAS_STEPS]->(:Step)-[:HAS_INGREDIENTS]->(stepIngredient:Ingredient) " +
@@ -32,7 +32,7 @@ public interface RecipeDetailsRepositoryNeo4j extends Neo4jRepository<RecipeDeta
 		       "WITH recipe, COLLECT(DISTINCT ingredientNames) AS distinctIngredients " +
 		       "WHERE NONE(ing IN distinctIngredients WHERE ing IN $excludedIngredients) " +
 		       "RETURN DISTINCT recipe.Id")
-		List<Long> findFilteredRecipes(List<String> diets, boolean glutenFree, List<String> excludedIngredients);
+		List<Long> findFilteredRecipes(List<String> diets, boolean glutenFree, boolean dairyFree, List<String> excludedIngredients);
 
 
     @Query("MATCH (recipe:RecipeDetails) WHERE recipe.Id IN $recipeIds " +

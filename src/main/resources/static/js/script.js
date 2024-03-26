@@ -50,8 +50,33 @@ document.addEventListener('DOMContentLoaded', () => {
     updateState();
 
     // Submit button click event
-    submitButton.addEventListener('click', function() {
-        const query = selectedPreferences.map(pref => `excludedIngredients=${encodeURIComponent(pref)}`).join('&');
-        window.location.href = `/recipes/filtered?${query}`;
-    });
+//    submitButton.addEventListener('click', function() {
+//        const query = selectedPreferences.map(pref => `excludedIngredients=${encodeURIComponent(pref)}`).join('&');
+//        window.location.href = `/recipes/filtered?${query}`;
+//    });
+
+        // Enable or disable preferences and hover effect based on the number of selected preferences
+        preferences.forEach(pref => {
+            if (selectedPreferences.length >= 4) {
+                if (!pref.classList.contains('active')) {
+                    pref.classList.add('disable-hover', 'disabled');
+                    pref.removeEventListener('click', preferenceClickHandler); // Disable further clicks
+                }
+            } else {
+                pref.classList.remove('disable-hover', 'disabled');
+                pref.addEventListener('click', preferenceClickHandler); // Re-enable clicks
+            }
+        });
+
+
+// Submit button click event
+submitButton.addEventListener('click', function() {
+    if (selectedPreferences.length > 0) {
+        const diets = selectedPreferences.join(','); // Convert array to comma-separated string
+        const glutenFree = selectedPreferences.includes('gluten-free'); // Check if 'gluten-free' is selected
+        const queryParameters = `diets=${diets}&glutenFree=${glutenFree}`;
+        window.location.href = `allergies-and-ingredients.html?${queryParameters}`;
+    }
+});
+
 });

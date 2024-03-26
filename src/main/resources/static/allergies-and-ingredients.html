@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Allergies and Excluded Ingredients</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Add Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Refine Your Recipe Search</h1>
+        <div class="preferences-layout"> <!-- This maintains the vertical alignment under the title -->
+            <div class="preference-section" id="allergies">
+                <h2>Allergies</h2>
+                <div class="preference-group">
+                    <div class="preference" data-value="no-allergies">No Allergies</div>
+                    <div class="preference" data-value="nuts">Nuts</div>
+                    <div class="preference" data-value="gluten">Gluten</div>
+                    <div class="preference" data-value="dairy">Dairy</div>
+                    <div class="preference" data-value="eggs">Eggs</div>
+                    <div class="preference" data-value="shellfish">Shellfish</div>
+                    <div class="preference" data-value="soy">Soy</div>
+                </div>
+                <div class="preference-group">
+                    <div class="preference" data-value="sesame">Sesame</div>
+                    <div class="preference" data-value="mustard">Mustard</div>
+                    <div class="preference" data-value="celery">Celery</div>
+                    <div class="preference" data-value="lupin">Lupin</div>
+                    <div class="preference" data-value="wheat">Wheat</div>
+                    <div class="preference" data-value="fish">Fish</div>
+                    <div class="preference" data-value="peanuts">Peanuts</div>
+                </div>
+                <div class="preference-group">
+                    <div class="preference" data-value="sulfites">Sulfites</div>
+                    <div class="preference" data-value="molluscs">Molluscs</div>
+                    <!-- <div class="preference" data-value="latex">Latex (Natural Rubber)</div> -->
+                    <div class="preference" data-value="kiwi">Kiwi</div>
+                    <div class="preference" data-value="corn">Corn</div>
+                    <div class="preference" data-value="sunflower-seeds">Sunflower Seeds</div>
+                </div>
+            </div>
+            <div class="preference-section" id="excluded-ingredients">
+                <h2>Excluded Ingredients</h2>
+    			<div class="preference-group">
+        			<div class="preference" data-value="sugar">Sugar</div>
+        			<div class="preference" data-value="salt">Salt</div>
+        			<div class="preference" data-value="yeast">Yeast</div>
+        			<div class="preference" data-value="corn">Corn</div>
+        			<div class="preference" data-value="gluten">Gluten</div>
+        			<div class="preference" data-value="pork">Pork</div>
+        			<div class="preference" data-value="red-meat">Red Meat</div>
+    			</div>
+    			<div class="preference-group">
+
+        			<div class="preference" data-value="chocolate">Chocolate</div>
+        			<div class="preference" data-value="caffeine">Caffeine</div>
+        			<div class="preference" data-value="soy">Soy</div>
+        			<div class="preference" data-value="dairy">Dairy</div>
+        			<div class="preference" data-value="eggs">Eggs</div>
+        			<div class="preference" data-value="nuts">Nuts</div>
+        			<div class="preference" data-value="fish">Fish</div>
+    			</div>
+    			<div class="preference-group">
+
+        			<div class="preference" data-value="shellfish">Shellfish</div>
+        			<div class="preference" data-value="tomatoes">Tomatoes</div>
+        			<div class="preference" data-value="strawberries">Strawberries</div>
+        			<div class="preference" data-value="citrus">Citrus</div>
+        			<div class="preference" data-value="anchovies">Anchovies</div>
+        			<div class="preference" data-value="wheat">Wheat</div>
+    			</div>
+            </div>
+        </div>
+        <button id="query-recipes" disabled>Query Recipes<i class="fas fa-arrow-right"></i><i class="fas fa-search"></i></button>
+        
+        <!-- Here we add the container for the recipes list -->
+        <div id="recipes-results">
+            <h2>Recipes Results</h2>
+            <div id="recipeResults"></div>
+        </div>
+        
+        
+    </div>
+    <script src="/js/allergiesIngredients.js"></script>
+</body>
+</html>

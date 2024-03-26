@@ -415,7 +415,8 @@ public class MealPlannerResponseController {
 	    public ResponseEntity<Map<String, Object>> fetchFilteredRecipes(
 	            @RequestParam(required = false) List<String> diets,
 	            @RequestParam(required = false) List<String> excludedIngredientsFromRequest,
-	            @RequestParam(defaultValue = "true") boolean glutenFree,
+	            @RequestParam(defaultValue = "false") boolean glutenFree,
+	            @RequestParam(defaultValue = "false") boolean dairyFree,
 	            @RequestParam(defaultValue = "7") int days) {
 
 	        // Prepare the lists of excluded ingredients from request and constructor categories
@@ -440,7 +441,7 @@ public class MealPlannerResponseController {
 	        // Print out the Cypher query for testing
 	        String printableCypherQuery = String.format(
 	            "MATCH (recipe:RecipeDetails)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
-	            "WHERE ANY(d IN %s WHERE d IN recipe.diets) AND recipe.glutenFree = %b " +
+	            "WHERE ALL(d IN %s WHERE d IN recipe.diets) " +
 	            "WITH recipe, COLLECT(DISTINCT toLower(ingredient.name)) AS rawIngredients, " +
 	            "COLLECT(DISTINCT toLower(ingredient.nameClean)) AS cleanIngredients " +
 	            "OPTIONAL MATCH (recipe)-[:HAS_PREPARATION_INSTRUCTIONS]->(:AnalyzedInstruction)-[:HAS_STEPS]->(:Step)-[:HAS_INGREDIENTS]->(stepIngredient:Ingredient) " +
@@ -452,19 +453,20 @@ public class MealPlannerResponseController {
 	            "WITH recipe, COLLECT(DISTINCT ingredientNames) AS distinctIngredients " +
 	            "WHERE NONE(ing IN distinctIngredients WHERE ing IN %s) " +
 	            "RETURN DISTINCT recipe.Id",
-	            dietsPrintable, glutenFree, excludedIngredientsPrintable
+	            dietsPrintable, excludedIngredientsPrintable
 	        );
 	        
 	        System.out.println("Cypher Query: " + printableCypherQuery);
 	        System.out.println("Diets: " + diets);
 	        System.out.println("GlutenFree: " + glutenFree);
+	        System.out.println("dairyFree: " + dairyFree);
 	        System.out.println("Excluded Ingredients: " + allExcludedIngredients);
 
 	        // Execute the query to fetch filtered recipe IDs
 	        // Implementation depends on your Neo4j repository setup
 	        // Fetch filtered recipe IDs from the repository
 	        List<Long> filteredRecipeIds = recipeDetailsRepositoryNeo4j.findFilteredRecipes(
-	        		diets, glutenFree, allExcludedIngredients);
+	        		diets, glutenFree, dairyFree, allExcludedIngredients);
 
 	        // If no recipes match the filters, return an empty meal plan
 	        if (filteredRecipeIds.isEmpty()) {

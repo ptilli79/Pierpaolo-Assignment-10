@@ -10,6 +10,7 @@ body, html {
     flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 30px;
+    width: 100%; /* Makes the group take the full width of its parent */
 }
 
 .container h1 {
@@ -30,6 +31,23 @@ body, html {
     color: white;
 }
 
+.preferences-layout {
+    display: flex;
+    justify-content: center; /* Center the sections */
+    width: 100%;
+    flex-wrap: nowrap; /* Prevents wrapping, ensure it's on the same line */
+    padding: 0 10px; /* Adds padding inside the layout for better spacing */
+}
+
+.preference-section {
+    flex: 1; /* Allows each section to grow and fill the space equally */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Keeps content centered horizontally */
+    justify-content: flex-start; /* Aligns items to the top, change to 'center' if you want middle alignment */
+    margin: 0; /* Adds some margin between the two sections */
+}
+
 .preference.active {
     background-color: #04AA6D;
     color: white;
@@ -45,7 +63,9 @@ body, html {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    max-width: 100%; 
     padding: 50px 10px;
+    box-sizing: border-box;
 }
 
 .preferences {
@@ -87,4 +107,80 @@ body, html {
 #submit-preferences .fas {
     margin-left: 10px;
     font-size: 16px;
+}
+
+#submit-preferences:enabled:hover,
+#query-recipes:enabled:hover {
+    background-color: magenta; /* Keeps the button color consistent without changing on hover */
+    cursor: pointer; /* Ensures cursor remains a pointer */
+}
+
+#submit-preferences:disabled:hover,
+#query-recipes:disabled:hover {
+    background-color: grey; /* Keeps the button color consistent without changing on hover */
+    cursor: not-allowed; /* Ensures cursor indicates the button is not clickable */
+}
+
+#query-recipes {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    font-size: 20px;
+    border-radius: 20px;
+    background-color: grey;
+    color: white;
+    cursor: not-allowed;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#query-recipes:enabled {
+    background-color: magenta;
+    cursor: pointer;
+}
+
+#query-recipes:hover {
+    background-color: #555;
+}
+
+#query-recipes .fas {
+    margin-left: 10px;
+    font-size: 16px;
+}
+
+.recipe-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+}
+
+.recipe-card {
+    flex: 0 1 calc(33.333% - 20px); /* Three items per row minus the gap */
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    text-align: center;
+    background-color: #f9f9f9;
+}
+
+.recipe-card h4 {
+    margin: 10px 0;
+    color: #333;
+}
+
+.recipe-card a {
+    display: block;
+    padding: 10px 20px;
+    background-color: #04AA6D;
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.recipe-card a:hover {
+    background-color: #037f57;
 }
