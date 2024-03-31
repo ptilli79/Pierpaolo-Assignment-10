@@ -9,9 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	const diets = queryParams.get('diets') || '';
 	const glutenFree = queryParams.get('glutenFree') === 'true';
 	
+
 	// Ingredient dictionary
 	const ingredientDictionary = {
-    'anchovies': ['salt packed anchovies', 'boquerones', 'canned anchovies', 'anchovy paste'],
+    'anchovies': ['salt packed anchovies', 'boquerones', 'canned anchovies', 'anchovy paste', 'anchovy', 'anchovies'],
     // Add more mappings as necessary
 };
 
@@ -75,45 +76,30 @@ queryButton.addEventListener('click', function() {
     if (selectedAllergies.length > 0) {
         excludedIngredientsFromRequest = excludedIngredientsFromRequest ? `${excludedIngredientsFromRequest},${selectedAllergies.join(',')}` : selectedAllergies.join(',');
     }
+	
+	// Redirect to results.html with parameters
+    const searchParams = new URLSearchParams({
+        diets: diets,
+        excludedIngredients: encodeURIComponent(excludedIngredientsFromRequest),
+        glutenFree: glutenFree
+    }).toString();
+    
+    
+    // Log the parameters
+	console.log(excludedIngredientsFromRequest);
 
-    // Construct the API query
-    const apiQuery = `/recipes/filtered?diets=${encodeURIComponent(diets)}&excludedIngredientsFromRequest=${encodeURIComponent(excludedIngredientsFromRequest)}&glutenFree=${glutenFree}`;
+	// Temporarily delay the redirection for debugging
+	setTimeout(() => {
+    	const searchParams = new URLSearchParams({
+        	diets: diets,
+        	excludedIngredients: encodeURIComponent(excludedIngredientsFromRequest),
+        	glutenFree: glutenFree
+    	}).toString();
+    
+    	window.location.href = `results.html?${searchParams}`;
+	}, 2000); // Delay for 2 seconds
+   
 
-    // Make a fetch call to your API
-    fetch(apiQuery)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json(); // Parse JSON from the response
-        })
-.then(data => {
-    console.log('Success:', data);
-    let htmlContent = '';
-
-    if(data.week) {
-        Object.entries(data.week).forEach(([day, info]) => {
-            if(info.meals && info.meals.length) {
-                info.meals.forEach(meal => {
-                    htmlContent += `
-                        <div class="recipe-card">
-                            <h4>ID: ${meal.id}</h4>
-                            <p>Title: ${meal.title}</p>
-                        </div>
-                    `;
-                });
-            }
-        });
-    } else {
-        htmlContent = '<p>No recipes found for this week.</p>';
-    }
-
-    document.getElementById('recipeResults').innerHTML = htmlContent;
-})
-.catch(error => {
-    console.error('There was a problem with the fetch operation:', error);
-    document.getElementById('recipeResults').innerHTML = `<p>Error: ${error.message}</p>`;
-});
 
 
 });

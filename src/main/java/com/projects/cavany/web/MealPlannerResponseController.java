@@ -89,8 +89,7 @@ public class MealPlannerResponseController {
 	private UriStringBuilder uriString;
 	
     @Autowired
-    private RecipeDetailsRepository recipeDetailsRepository;
-    
+    private RecipeDetailsRepository recipeDetailsRepository;    
     @Autowired
     private RecipeDetailsRepositoryNeo4j recipeDetailsRepositoryNeo4j;
     
@@ -99,7 +98,7 @@ public class MealPlannerResponseController {
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
-    private static final int maxIds = 125000;
+    private static final int maxIds = 180000;
     private static final int batchSize = 50;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
     private final List<String> diets = Arrays.asList("Whole30"); // You can add more diets as needed
@@ -417,7 +416,7 @@ public class MealPlannerResponseController {
 	            @RequestParam(required = false) List<String> excludedIngredientsFromRequest,
 	            @RequestParam(defaultValue = "false") boolean glutenFree,
 	            @RequestParam(defaultValue = "false") boolean dairyFree,
-	            @RequestParam(defaultValue = "7") int days) {
+	            @RequestParam(defaultValue = "14") int days) {
 
 	        // Prepare the lists of excluded ingredients from request and constructor categories
 	        List<String> allExcludedIngredients = new ArrayList<>();

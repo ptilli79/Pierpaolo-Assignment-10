@@ -184,3 +184,42 @@ body, html {
 .recipe-card a:hover {
     background-color: #037f57;
 }
+
+/* results.css */
+.results-title {
+	width: 100%; /* Ensure it takes full width */
+    background-color: blue;
+    color: white;
+    padding: 10px;
+}
+
+.back-to-search {
+    background-color: orange; /* Set the background color */
+    color: white; /* Set text color to white */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding around the text and icon */
+    border-radius: 25px; /* Soften the corners */
+    cursor: pointer; /* Change cursor to indicate it's clickable */
+    font-size: 18px; /* Increase font size for better visibility */
+    display: inline-flex; /* Use inline-flex for alignment */
+    align-items: center; /* Center the items vertically */
+    justify-content: center; /* Center the content horizontally for aesthetics */
+    transition: background-color 0.3s; /* Smooth transition for the background color */
+    text-decoration: none; /* Remove underline from text */
+    margin: 10px 0; /* Add some margin for spacing, adjust as needed */
+}
+
+.back-to-search i {
+    margin-right: 8px; /* Space between icon and text */
+    font-size: 1.2em; /* Slightly larger icon */
+}
+
+.back-to-search:hover {
+    background-color: #e67e22; /* Darker orange on hover for interaction feedback */
+}
+.button-container {
+    align-self: flex-start; /* Confirm this property is effective */
+    width: 100%;
+    display: flex; /* Ensure this div is also a flex container */
+    justify-content: flex-start; /* Align its children (the button) to the start */
+}
