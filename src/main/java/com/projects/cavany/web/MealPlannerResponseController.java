@@ -456,6 +456,7 @@ public class MealPlannerResponseController {
 	        );
 	        
 	        System.out.println("Cypher Query: " + printableCypherQuery);
+	        System.out.println("Days: " + days);
 	        System.out.println("Diets: " + diets);
 	        System.out.println("GlutenFree: " + glutenFree);
 	        System.out.println("dairyFree: " + dairyFree);
@@ -475,7 +476,7 @@ public class MealPlannerResponseController {
 	        // Fetch recipe details for the filtered IDs (limit results as needed, assuming this method exists)
 	        List<RecipeDetails> limitedRecipes = recipeDetailsRepositoryNeo4j.findLimitedRecipesByIds(filteredRecipeIds);
 	        
-	     // Initialize daysOfWeek array
+	        // Initialize daysOfWeek array
 	        String[] daysOfWeek = {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
 
 
@@ -483,6 +484,9 @@ public class MealPlannerResponseController {
 	        int mealsPerDay = 3; // This could be adjusted as needed
 	        int totalMealsNeeded = days * mealsPerDay;
 
+	        // Shuffle the list of limited recipes to introduce randomness
+	        Collections.shuffle(limitedRecipes);
+	        
 	        // Select a subset of recipes if there are more recipes than needed
 	        List<RecipeDetails> selectedRecipes;
 	        if (limitedRecipes.size() > totalMealsNeeded) {
@@ -513,7 +517,6 @@ public class MealPlannerResponseController {
 	            String dayOfWeek = daysOfWeek[dayIndex % 7]; // Use modulo to cycle through days of the week
 	            weeklyMealPlan.put(dayOfWeek + (dayIndex / 7 + 1), Map.of("meals", mealsForDay)); // Append week number if more than 7 days
 	        }
-
 
 	        // Wrap the weekly meal plan in a 'week' object and return
 	        return ResponseEntity.ok(Map.of("week", weeklyMealPlan));

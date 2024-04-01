@@ -7,13 +7,17 @@ function fetchRecipeData() {
     const diets = queryParams.get('diets') || '';
     const excludedIngredients = queryParams.get('excludedIngredients') || '';
     const glutenFree = queryParams.get('glutenFree') === 'true';
-    const apiQuery = `/recipes/filtered?diets=${encodeURIComponent(diets)}&excludedIngredientsFromRequest=${excludedIngredients}&glutenFree=${glutenFree}`;
+    const days = queryParams.get('days') || '14'; // Default to 14 days if not specified
+
+    // If the parameters were already URL-encoded when passed in the URL, you don't need to encode them again here.
+    const apiQuery = `/recipes/filtered?diets=${diets}&excludedIngredientsFromRequest=${excludedIngredients}&glutenFree=${glutenFree}&days=${days}`;
 
     fetch(apiQuery)
         .then(handleResponse)
         .then(displayRecipes)
         .catch(handleError);
 }
+
 
 function handleResponse(response) {
     if (!response.ok) throw new Error('Network response was not ok');

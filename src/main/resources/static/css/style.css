@@ -136,6 +136,8 @@ body, html {
     justify-content: center;
 }
 
+
+
 #query-recipes:enabled {
     background-color: magenta;
     cursor: pointer;
@@ -193,33 +195,99 @@ body, html {
     padding: 10px;
 }
 
-.back-to-search {
-    background-color: orange; /* Set the background color */
-    color: white; /* Set text color to white */
-    border: none; /* Remove border */
-    padding: 10px 20px; /* Add padding around the text and icon */
-    border-radius: 25px; /* Soften the corners */
-    cursor: pointer; /* Change cursor to indicate it's clickable */
-    font-size: 18px; /* Increase font size for better visibility */
-    display: inline-flex; /* Use inline-flex for alignment */
-    align-items: center; /* Center the items vertically */
-    justify-content: center; /* Center the content horizontally for aesthetics */
-    transition: background-color 0.3s; /* Smooth transition for the background color */
-    text-decoration: none; /* Remove underline from text */
-    margin: 10px 0; /* Add some margin for spacing, adjust as needed */
-}
-
-.back-to-search i {
-    margin-right: 8px; /* Space between icon and text */
-    font-size: 1.2em; /* Slightly larger icon */
-}
-
-.back-to-search:hover {
-    background-color: #e67e22; /* Darker orange on hover for interaction feedback */
-}
 .button-container {
     align-self: flex-start; /* Confirm this property is effective */
     width: 100%;
     display: flex; /* Ensure this div is also a flex container */
     justify-content: flex-start; /* Align its children (the button) to the start */
 }
+
+.time-selection-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Adjust as necessary */
+    margin-bottom: 20px; /* Space from other elements */
+}
+
+/* Style for the numeric input */
+#timeAmount {
+	height: 34px;
+    padding: 0px 10px; /* Internal padding */
+    font-size: 20px; /* Text size */
+    text-align: center; /* Center the input text */
+    width: 35px; /* Adjust width as necessary */
+    outline: none; /* Remove focus outline */
+    transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transition for hover and focus */
+    justify-content: center;
+    border:none;
+    font-weight: bold; /* Make text bold */
+}
+
+.toggle-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    height: 34px;
+    border-radius: 20px;
+    background-color: white;
+    cursor: pointer;
+    color: orange; /* Default text color */
+    font-weight: bold; /* Make text bold */
+    border: 2px solid #ccc; /* Initial border color and thicker border */
+    border-color: orange;
+    font-size:18px;
+}
+
+.toggle-container:hover {
+    transform: scale(1.05); /* Optional: Slightly enlarges the button on hover for a tactile feel */
+}
+
+.toggle-container.days  {
+    color: darkorange; /* Dark orange for days */
+    font-weight: bold; /* Make text bold */
+    border-color: darkorange; /* Border color matching text */
+}
+
+.toggle-container.weeks  {
+    color: lightblue; /* Dark blue for weeks */
+    font-weight: bold; /* Make text bold */
+    border-color: lightblue; /* Border color matching text */
+}
+
+.back-to-search, .continue-search {
+    background-color: orange; /* Default background color */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+    text-decoration: none;
+    margin: 10px 10px 10px 0; /* Adjusted for spacing around buttons */
+    height: 45px; /* Explicitly set the height */
+}
+
+.continue-search {
+background-color: magenta;
+}
+
+.back-to-search:hover, .continue-search:hover {
+    transform: scale(1.05);
+}
+
+.back-to-search i {
+    margin-right: 8px; /* Consistent space between icon and text */
+    font-size: 1.2em; /* Consistent icon size */
+}
+
+.continue-search i {
+    margin-left: 8px; /* Consistent space between icon and text */
+    font-size: 1.2em; /* Consistent icon size */
+}
+
