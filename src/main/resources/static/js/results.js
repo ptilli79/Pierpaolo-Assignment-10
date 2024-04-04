@@ -33,27 +33,31 @@ function displayRecipes(data) {
         return;
     }
 
-    // Enhance color assignments to accommodate more groups
-    const colors = ['#ffcccc', '#ccffcc', '#ccccff', '#ffcc99', '#99ccff', '#cc99ff', '#ff99cc']; // Extended color palette
+    // Define a set of colors to cycle through for each week
+    const colors = ['#ffcccc', '#ccffcc', '#ccccff', '#ffcc99', '#99ccff', '#cc99ff', '#ff99cc'];
     
-    let recipeCounter = 0; // Keep track of the recipe count to group every 21 recipes
+    // Track the current week number
+    let currentWeek = 1;
+    // Keep track of the number of days processed to determine the week number
+    let daysProcessed = 0;
+    
+    // Iterate over each day in the week data
+    Object.entries(data.week).forEach(([dayOfWeek, info]) => {
+        daysProcessed++;
+        
+        // Calculate the current week based on the number of days processed
+        currentWeek = Math.ceil(daysProcessed / 7);
+        
+        // Determine the color for the current week
+        const weekColor = colors[(currentWeek - 1) % colors.length];
 
-    Object.entries(data.week).forEach(([weekNumber, info]) => {
-        if (!info.meals || info.meals.length === 0) return;
-
+        // Process each meal within the day
         info.meals.forEach(meal => {
             const card = document.createElement('div');
             card.className = 'recipe-card';
-            
-            // Calculate the group index based on the recipe counter
-            const groupIndex = Math.floor(recipeCounter / 21); // Grouping every 21 recipes
-            const backgroundColor = colors[groupIndex % colors.length]; // Cycle through colors array
-            
-            card.style.backgroundColor = backgroundColor; // Apply group-specific background color
-            card.style.border = '1px solid #ccc';
-            card.style.marginBottom = '10px';
-            card.style.padding = '10px';
+            card.style.backgroundColor = weekColor; // Apply the color
 
+            // Title and ID
             const titleText = document.createElement('p');
             titleText.innerHTML = `<strong>Title:</strong> ${meal.title}`;
             card.appendChild(titleText);
@@ -62,13 +66,20 @@ function displayRecipes(data) {
             idText.innerHTML = `<strong>ID:</strong> ${meal.id}`;
             card.appendChild(idText);
 
-            container.appendChild(card);
+            // Ingredients list (if available)
+            if (meal.ingredients) {
+                const ingredientsText = document.createElement('p');
+                ingredientsText.innerHTML = `<strong>Ingredients:</strong> ${meal.ingredients.join(', ')}`;
+                card.appendChild(ingredientsText);
+            }
 
-            recipeCounter++; // Increment the recipe counter after processing each recipe
+            container.appendChild(card);
         });
+
+        // Output for debugging
+        console.log(`Week ${currentWeek} (Day: ${dayOfWeek}): Color ${weekColor}`);
     });
 }
-
 
 
 

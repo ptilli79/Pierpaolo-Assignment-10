@@ -4,14 +4,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.neo4j.driver.Values;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.neo4j.core.Neo4jClient;
+import org.springframework.data.neo4j.core.Neo4jTemplate;
 import org.springframework.stereotype.Service;
 
 import com.projects.cavany.dto.ComplexSearchResultItemDTO;
 import com.projects.cavany.dto.ComplexSearchResultsDTO;
 import com.projects.cavany.dto.ExtendedIngredientDTO;
 import com.projects.cavany.dto.RecipeDetailsDTO;
+import com.projects.cavany.dto.RecipeWithIngredientsDTOFromEntity;
 import com.projects.cavany.repository.RecipeDetailsRepository;
 
 @Service
@@ -19,6 +24,45 @@ public class GenerateRecipeService {
 	
 	@Autowired
 	RecipeDetailsRepository recipeDetailsRepository;
+	
+	
+    @Autowired
+    private Neo4jClient neo4jClient;
+
+    // Constructor injection of Neo4jClient
+    public GenerateRecipeService(Neo4jClient neo4jClient) {
+        this.neo4jClient = neo4jClient;
+    }
+
+    public List<RecipeWithIngredientsDTOFromEntity> findLimitedRecipesWithIngredients(List<Long> recipeIds) {
+        String cypherQuery = 
+            "MATCH (recipe:RecipeDetails)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
+            "WHERE recipe.Id IN $recipeIds " +
+            "OPTIONAL MATCH (recipe)-[:HAS_PREPARATION_INSTRUCTIONS]->(:AnalyzedInstruction)-[:HAS_STEPS]->(:Step)-[:HAS_INGREDIENTS]->(stepIngredient:Ingredient) " +
+            "WITH recipe, " +
+            "COLLECT(DISTINCT ingredient.name) AS rawIngredients, " +
+            "COLLECT(DISTINCT ingredient.nameClean) AS cleanIngredients, " +
+            "COLLECT(DISTINCT stepIngredient.name) AS stepRawIngredients, " +
+            "COLLECT(DISTINCT stepIngredient.nameClean) AS stepCleanIngredients " +
+            "RETURN recipe.Id AS recipeId, recipe.title AS recipeTitle, " +
+            "cleanIngredients + rawIngredients + stepRawIngredients + stepCleanIngredients AS recipeIngredients " +
+            "ORDER BY recipe.Id ASC";
+
+        return neo4jClient.query(cypherQuery)
+                .bindAll(Map.of("recipeIds", recipeIds))
+                .fetchAs(RecipeWithIngredientsDTOFromEntity.class)
+                .mappedBy((typeSystem, record) -> {
+                    Long recipeId = record.get("recipeId").asLong();
+                    String recipeTitle = record.get("recipeTitle").asString();
+                    // Correctly map the list of strings for ingredients
+                    List<String> ingredients = record.get("recipeIngredients").asList(value -> value.asString());
+                    return new RecipeWithIngredientsDTOFromEntity(recipeId, recipeTitle, ingredients);
+                })
+                .all()
+                .stream()
+                .collect(Collectors.toList());
+    }
+
 	
     public void generateRecipeCSV(Map<Long, RecipeDetailsDTO> recipeDetailsMap, String outputPath) throws IOException {
         if (recipeDetailsMap != null && !recipeDetailsMap.isEmpty()) {

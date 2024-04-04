@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.projects.cavany.domain.RecipeDetails;
+import com.projects.cavany.dto.RecipeWithIngredientsDTOFromEntity;
 
 @Repository
 public interface RecipeDetailsRepositoryNeo4j extends Neo4jRepository<RecipeDetails, Long> {
@@ -38,6 +39,13 @@ public interface RecipeDetailsRepositoryNeo4j extends Neo4jRepository<RecipeDeta
     @Query("MATCH (recipe:RecipeDetails) WHERE recipe.Id IN $recipeIds " +
             "RETURN recipe ")
 	List<RecipeDetails> findLimitedRecipesByIds(List<Long> recipeIds);
+    
+
+
+
+
+
+
     
 
 }

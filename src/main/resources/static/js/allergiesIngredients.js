@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Ingredient dictionary
 	const ingredientDictionary = {
     'anchovies': ['salt packed anchovies', 'boquerones', 'canned anchovies', 'anchovy paste', 'anchovy', 'anchovies'],
-    'eggs': ['hard boiled egg', 'egg yolk', 'eggs', 'egg']
+    'eggs': ['hard boiled egg', 'egg yolk', 'eggs', 'egg whites', 'egg'],
+    'fish': ['fish sauce', 'fish stock', 'fish', 'white fish', , 'white fish fillets', 'cod fillets', 'bluefish fillets', 'seabass fillets', 'swordfish', 'salmon', 'salmon fillets', 'halibut fillets', 'halibut', 'trout fillets', 'trout', 'monkfish fillets', 'monkfish']
     // Add more mappings as necessary
 };
 

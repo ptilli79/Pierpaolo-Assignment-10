@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,21 +43,7 @@ import com.projects.cavany.domain.ProductMatch;
 import com.projects.cavany.domain.RecipeDetails;
 import com.projects.cavany.domain.Step;
 import com.projects.cavany.domain.WinePairing;
-import com.projects.cavany.dto.AnalyzedInstructionDTO;
-import com.projects.cavany.dto.BulkRecipeDetailsDTO;
-import com.projects.cavany.dto.ComplexSearchResultItemDTO;
-import com.projects.cavany.dto.ComplexSearchResultsDTO;
-import com.projects.cavany.dto.DailyPlanner;
-import com.projects.cavany.dto.EquipmentDTO;
-import com.projects.cavany.dto.ExtendedIngredientDTO;
-import com.projects.cavany.dto.IngredientDTO;
-import com.projects.cavany.dto.MeasuresDTO;
-import com.projects.cavany.dto.ProductMatchDTO;
-import com.projects.cavany.dto.RandomSearchResponse;
-import com.projects.cavany.dto.RecipeDetailsDTO;
-import com.projects.cavany.dto.StepDTO;
-import com.projects.cavany.dto.WeeklyPlannerResponse;
-import com.projects.cavany.dto.WinePairingDTO;
+import com.projects.cavany.dto.*;
 import com.projects.cavany.repository.DailyPlannerRepository;
 import com.projects.cavany.repository.ExtendedIngredientRepositoryNeo4j;
 import com.projects.cavany.repository.RecipeDetailsRepository;
@@ -474,52 +461,53 @@ public class MealPlannerResponseController {
 	        }
 
 	        // Fetch recipe details for the filtered IDs (limit results as needed, assuming this method exists)
-	        List<RecipeDetails> limitedRecipes = recipeDetailsRepositoryNeo4j.findLimitedRecipesByIds(filteredRecipeIds);
+	        //List<RecipeDetails> limitedRecipes = recipeDetailsRepositoryNeo4j.findLimitedRecipesByIds(filteredRecipeIds);
 	        
+
+
 	        // Initialize daysOfWeek array
 	        String[] daysOfWeek = {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
-
-
-	        // Calculate how many recipes are needed based on the number of days and meals per day
-	        int mealsPerDay = 3; // This could be adjusted as needed
+	        int mealsPerDay = 3; // This can be adjusted as needed
 	        int totalMealsNeeded = days * mealsPerDay;
+	        // Fetch recipes with ingredients
+	     // Fetch raw data
+	        List<RecipeWithIngredientsDTOFromEntity> recipesWithIngredients = generateRecipeService.findLimitedRecipesWithIngredients(filteredRecipeIds);
 
-	        // Shuffle the list of limited recipes to introduce randomness
-	        Collections.shuffle(limitedRecipes);
+
 	        
-	        // Select a subset of recipes if there are more recipes than needed
-	        List<RecipeDetails> selectedRecipes;
-	        if (limitedRecipes.size() > totalMealsNeeded) {
-	            selectedRecipes = new ArrayList<>(limitedRecipes.subList(0, totalMealsNeeded));
-	        } else {
-	            selectedRecipes = new ArrayList<>(limitedRecipes);
-	        }
+	        // Shuffle for randomness
+	        Collections.shuffle(recipesWithIngredients);
 
-	     // Initialize recipeIterator from selectedRecipes
-	        Iterator<RecipeDetails> recipeIterator = selectedRecipes.iterator();
+	        // Calculate needed recipes and select subset if necessary
+	
+	        List<RecipeWithIngredientsDTOFromEntity> selectedRecipes = recipesWithIngredients.size() > totalMealsNeeded ?
+	                recipesWithIngredients.subList(0, totalMealsNeeded) : new ArrayList<>(recipesWithIngredients);
 
-	        // Logic to distribute selected recipes across the specified days
 	        Map<String, Object> weeklyMealPlan = new LinkedHashMap<>();
+	        Iterator<RecipeWithIngredientsDTOFromEntity> recipeIterator = selectedRecipes.iterator();
 
 	        for (int dayIndex = 0; dayIndex < days; dayIndex++) {
 	            List<Map<String, Object>> mealsForDay = new ArrayList<>();
 	            for (int j = 0; j < mealsPerDay && recipeIterator.hasNext(); j++) {
-	                RecipeDetails recipe = recipeIterator.next();
+	                RecipeWithIngredientsDTOFromEntity recipeDTO = recipeIterator.next();
 	                Map<String, Object> meal = new HashMap<>();
-	                meal.put("id", recipe.getId());
-	                meal.put("readyInMinutes", recipe.getReadyInMinutes());
-	                meal.put("sourceUrl", recipe.getSourceUrl());
-	                meal.put("servings", recipe.getServings());
-	                meal.put("title", recipe.getTitle());
-	                meal.put("imageType", recipe.getImageType());
+	                meal.put("id", recipeDTO.getRecipeId());
+	                meal.put("title", recipeDTO.getRecipeTitle());
+	                
+	                // Ensure ingredients list is unique
+	                List<String> uniqueIngredients = new ArrayList<>(new LinkedHashSet<>(recipeDTO.getRecipeIngredients()));
+	                
+	                meal.put("ingredients", uniqueIngredients);
+	                // add more properties as needed
 	                mealsForDay.add(meal);
 	            }
-	            String dayOfWeek = daysOfWeek[dayIndex % 7]; // Use modulo to cycle through days of the week
-	            weeklyMealPlan.put(dayOfWeek + (dayIndex / 7 + 1), Map.of("meals", mealsForDay)); // Append week number if more than 7 days
+	            
+	            String dayOfWeek = daysOfWeek[dayIndex % daysOfWeek.length];
+	            weeklyMealPlan.put(dayOfWeek + (dayIndex >= 7 ? " " + ((dayIndex / 7) + 1) : ""), Map.of("meals", mealsForDay));
 	        }
 
-	        // Wrap the weekly meal plan in a 'week' object and return
 	        return ResponseEntity.ok(Map.of("week", weeklyMealPlan));
+
 	    }
 
 	    
@@ -784,6 +772,7 @@ public class MealPlannerResponseController {
 	    // Add more fields if necessary
 	    return productMatch;
 	}
+
 }
 
 	
