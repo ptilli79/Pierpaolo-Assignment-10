@@ -460,51 +460,78 @@ public class MealPlannerResponseController {
 	            return ResponseEntity.ok(Map.of("week", Collections.emptyMap()));
 	        }
 
-	        // Fetch recipe details for the filtered IDs (limit results as needed, assuming this method exists)
-	        //List<RecipeDetails> limitedRecipes = recipeDetailsRepositoryNeo4j.findLimitedRecipesByIds(filteredRecipeIds);
-	        
-
 
 	        // Initialize daysOfWeek array
 	        String[] daysOfWeek = {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
 	        int mealsPerDay = 3; // This can be adjusted as needed
 	        int totalMealsNeeded = days * mealsPerDay;
+	        List<String> dishTypes = new ArrayList<>(Arrays.asList("lunch", "dinner", "main course", "main dish", "morning meal", "breakfast", "brunch"));
 	        // Fetch recipes with ingredients
 	     // Fetch raw data
-	        List<RecipeWithIngredientsDTOFromEntity> recipesWithIngredients = generateRecipeService.findLimitedRecipesWithIngredients(filteredRecipeIds);
-
+	        System.out.println("Filtered Recipe IDs: " + filteredRecipeIds.size());
+	        List<RecipeWithIngredientsDTOFromEntity> recipesWithIngredients = generateRecipeService.findLimitedRecipesWithIngredients(filteredRecipeIds,dishTypes);
+	        System.out.println("Recipes With Ingredients: " + recipesWithIngredients.size());
 
 	        
 	        // Shuffle for randomness
 	        Collections.shuffle(recipesWithIngredients);
+	        
+	        List<RecipeWithIngredientsDTOFromEntity> selectedRecipes;
 
-	        // Calculate needed recipes and select subset if necessary
-	
-	        List<RecipeWithIngredientsDTOFromEntity> selectedRecipes = recipesWithIngredients.size() > totalMealsNeeded ?
-	                recipesWithIngredients.subList(0, totalMealsNeeded) : new ArrayList<>(recipesWithIngredients);
+	        // Select a subset of recipes if there are more recipes than needed
 
-	        Map<String, Object> weeklyMealPlan = new LinkedHashMap<>();
+	        if (recipesWithIngredients.size() > totalMealsNeeded) {
+	            selectedRecipes = new ArrayList<>(recipesWithIngredients.subList(0, totalMealsNeeded));
+	        } else {
+	            selectedRecipes = new ArrayList<>(recipesWithIngredients);
+	        }
+
+	     // Initialize recipeIterator from selectedRecipes
 	        Iterator<RecipeWithIngredientsDTOFromEntity> recipeIterator = selectedRecipes.iterator();
 
+	        // Logic to distribute selected recipes across the specified days
+	        Map<String, Object> weeklyMealPlan = new LinkedHashMap<>();
+	        
+	        
+	        System.out.println("Selected Recipes With Ingredients: " + selectedRecipes.size());
+
+
+
+	        // Used to keep track of the current week for resetting meal counter
+	        int currentWeek = 1;
+	        int mealCounter = 1; // Start counting meals from 1 for each week
+
 	        for (int dayIndex = 0; dayIndex < days; dayIndex++) {
+	            // Calculate week number for the current day
+	            int weekNumber = (dayIndex / 7) + 1;
+	            
+	            // Reset meal counter if a new week starts
+	            if (weekNumber > currentWeek) {
+	                mealCounter = 1; // Reset meal counter for the new week
+	                currentWeek = weekNumber;
+	            }
+	            
 	            List<Map<String, Object>> mealsForDay = new ArrayList<>();
 	            for (int j = 0; j < mealsPerDay && recipeIterator.hasNext(); j++) {
 	                RecipeWithIngredientsDTOFromEntity recipeDTO = recipeIterator.next();
 	                Map<String, Object> meal = new HashMap<>();
 	                meal.put("id", recipeDTO.getRecipeId());
 	                meal.put("title", recipeDTO.getRecipeTitle());
-	                
-	                // Ensure ingredients list is unique
 	                List<String> uniqueIngredients = new ArrayList<>(new LinkedHashSet<>(recipeDTO.getRecipeIngredients()));
-	                
 	                meal.put("ingredients", uniqueIngredients);
-	                // add more properties as needed
+	                
+	                // Set week number and meal number within the week
+	                meal.put("weekNumber", weekNumber);
+	                meal.put("mealNumber", mealCounter++); // Increment meal counter after setting
+
 	                mealsForDay.add(meal);
 	            }
 	            
-	            String dayOfWeek = daysOfWeek[dayIndex % daysOfWeek.length];
-	            weeklyMealPlan.put(dayOfWeek + (dayIndex >= 7 ? " " + ((dayIndex / 7) + 1) : ""), Map.of("meals", mealsForDay));
+	            String dayOfWeek = daysOfWeek[dayIndex % 7]; // Use modulo to cycle through days of the week
+	            weeklyMealPlan.put("Week " + weekNumber + " " + dayOfWeek, Map.of("meals", mealsForDay)); // Append week number and day of the week
 	        }
+
+	        // The rest of your method that returns or processes the weeklyMealPlan map
 
 	        return ResponseEntity.ok(Map.of("week", weeklyMealPlan));
 

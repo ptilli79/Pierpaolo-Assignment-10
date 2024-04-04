@@ -34,10 +34,10 @@ public class GenerateRecipeService {
         this.neo4jClient = neo4jClient;
     }
 
-    public List<RecipeWithIngredientsDTOFromEntity> findLimitedRecipesWithIngredients(List<Long> recipeIds) {
+    public List<RecipeWithIngredientsDTOFromEntity> findLimitedRecipesWithIngredients(List<Long> recipeIds, List<String> dishTypes) {
         String cypherQuery = 
             "MATCH (recipe:RecipeDetails)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
-            "WHERE recipe.Id IN $recipeIds " +
+            "WHERE recipe.Id IN $recipeIds AND any(dishType IN $dishTypes WHERE dishType IN recipe.dishTypes) " +
             "OPTIONAL MATCH (recipe)-[:HAS_PREPARATION_INSTRUCTIONS]->(:AnalyzedInstruction)-[:HAS_STEPS]->(:Step)-[:HAS_INGREDIENTS]->(stepIngredient:Ingredient) " +
             "WITH recipe, " +
             "COLLECT(DISTINCT ingredient.name) AS rawIngredients, " +
@@ -48,14 +48,14 @@ public class GenerateRecipeService {
             "cleanIngredients + rawIngredients + stepRawIngredients + stepCleanIngredients AS recipeIngredients " +
             "ORDER BY recipe.Id ASC";
 
+        // Assuming neo4jClient is correctly set up to interact with your Neo4j database
         return neo4jClient.query(cypherQuery)
-                .bindAll(Map.of("recipeIds", recipeIds))
+                .bindAll(Map.of("recipeIds", recipeIds, "dishTypes", dishTypes)) // Bind both recipeIds and dishTypes to the query
                 .fetchAs(RecipeWithIngredientsDTOFromEntity.class)
                 .mappedBy((typeSystem, record) -> {
                     Long recipeId = record.get("recipeId").asLong();
                     String recipeTitle = record.get("recipeTitle").asString();
-                    // Correctly map the list of strings for ingredients
-                    List<String> ingredients = record.get("recipeIngredients").asList(value -> value.asString());
+                    List<String> ingredients = record.get("recipeIngredients").asList(value -> value.asString()); // Extracting ingredients as a list of strings
                     return new RecipeWithIngredientsDTOFromEntity(recipeId, recipeTitle, ingredients);
                 })
                 .all()

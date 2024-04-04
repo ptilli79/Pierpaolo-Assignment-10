@@ -73,6 +73,10 @@ function displayRecipes(data) {
                 card.appendChild(ingredientsText);
             }
 
+			 // Week number and meal number
+    		const weekMealInfoText = document.createElement('p');
+    		weekMealInfoText.innerHTML = `<strong>Week:</strong> ${meal.weekNumber}, <strong>Meal:</strong> ${meal.mealNumber}`;
+    		card.appendChild(weekMealInfoText);
             container.appendChild(card);
         });
 
@@ -80,13 +84,6 @@ function displayRecipes(data) {
         console.log(`Week ${currentWeek} (Day: ${dayOfWeek}): Color ${weekColor}`);
     });
 }
-
-
-
-
-
-
-
 
 function handleError(error) {
     console.error('Fetch error:', error);
