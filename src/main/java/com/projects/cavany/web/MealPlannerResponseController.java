@@ -24,6 +24,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -85,7 +86,7 @@ public class MealPlannerResponseController {
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
-    private static final int maxIds = 180000;
+    private static final int maxIds = 200000;
     private static final int batchSize = 50;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
     private final List<String> diets = Arrays.asList("Whole30"); // You can add more diets as needed
@@ -396,7 +397,7 @@ public class MealPlannerResponseController {
 	        }
 	    }
    
-	    
+	    @PreAuthorize("hasRole('ROLE_USER')")
 	    @GetMapping("/recipes/filtered")
 	    public ResponseEntity<Map<String, Object>> fetchFilteredRecipes(
 	            @RequestParam(required = false) List<String> diets,
@@ -745,28 +746,7 @@ public class MealPlannerResponseController {
 	    
 	    return recipe;
 	}
-	
-	private String buildCypherQuery(List<String> diets, List<String> excludedIngredients) {
-	    StringBuilder query = new StringBuilder("MATCH (recipe:RecipeDetails) ");
-
-	    List<String> conditions = new ArrayList<>();
-	    if (!diets.isEmpty()) {
-	        conditions.add("ANY(diet IN recipe.diets WHERE diet IN [" + 
-	            diets.stream().map(diet -> "\"" + diet + "\"").collect(Collectors.joining(", ")) + "])");
-	    }
-
-	    if (!excludedIngredients.isEmpty()) {
-	        conditions.add("NONE(ingredient IN recipe.ingredients WHERE ingredient.name IN [" + 
-	            excludedIngredients.stream().map(ingredient -> "\"" + ingredient + "\"").collect(Collectors.joining(", ")) + "])");
-	    }
-
-	    if (!conditions.isEmpty()) {
-	        query.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
-	    }
-
-	    query.append("RETURN recipe");
-	    return query.toString();
-	}
+		
 	private Ingredient convertToIngredientEntity(IngredientDTO ingredientDTO) {
 	    Ingredient ingredient = new Ingredient();
 	    ingredient.setId(ingredientDTO.getId());
