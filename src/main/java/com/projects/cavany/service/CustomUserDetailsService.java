@@ -7,8 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.projects.cavany.domain.WebUser;
 import com.projects.cavany.repository.WebUserRepository;
-
-import security.CustomSecurityUser;
+import com.projects.cavany.security.CustomSecurityUser;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {

@@ -1,4 +1,4 @@
-package security;
+package com.projects.cavany.security;
 
 
 import org.springframework.context.annotation.Bean;
