@@ -3,11 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function fetchRecipeData() {
-    const queryParams = new URLSearchParams(window.location.search);
-    const diets = queryParams.get('diets') || '';
-    const excludedIngredients = queryParams.get('excludedIngredients') || '';
-    const glutenFree = queryParams.get('glutenFree') === 'true';
-    const days = queryParams.get('days') || '14'; // Default to 14 days if not specified
+    // Retrieve query parameters from the session storage
+    const diets = sessionStorage.getItem('diets') || '';
+    const excludedIngredients = sessionStorage.getItem('excludedIngredients') || '';
+    const glutenFree = sessionStorage.getItem('glutenFree') === 'true';
+    const days = sessionStorage.getItem('days') || '14'; // Default to 14 days if not specified
 
     // If the parameters were already URL-encoded when passed in the URL, you don't need to encode them again here.
     const apiQuery = `/recipes/filtered?diets=${diets}&excludedIngredientsFromRequest=${excludedIngredients}&glutenFree=${glutenFree}&days=${days}`;
@@ -88,4 +88,19 @@ function displayRecipes(data) {
 function handleError(error) {
     console.error('Fetch error:', error);
     document.getElementById('recipeResults').innerHTML = `<p>Error: ${error.message}</p>`;
+}
+
+// ... (existing code)
+
+function goToAllergiesPage() {
+    // Make a request to the backend to get the allergies page
+    fetch('/allergies')
+        .then(response => response.text())
+        .then(html => {
+            // Replace the current page with the received HTML
+            document.open();
+            document.write(html);
+            document.close();
+        })
+        .catch(error => console.error('Error:', error));
 }

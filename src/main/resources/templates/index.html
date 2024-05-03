@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
+	<meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Dietary Preferences</title>

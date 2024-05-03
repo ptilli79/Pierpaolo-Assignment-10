@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
+	<meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recipe Results</title>
@@ -13,7 +14,7 @@
     <div class="container">
     
 <div class="button-container">
-    <button class="back-to-search" onclick="window.history.back();"><i class="fas fa-arrow-left"></i> Back to Filter</button>
+    <button class="back-to-search" onclick="goToAllergiesPage();"><i class="fas fa-arrow-left"></i> Back to Filter</button>
     <button class="continue-search" onclick="fetchRecipeData();"> Continue Searching<i class="fas fa-search"></i></button>
 
     

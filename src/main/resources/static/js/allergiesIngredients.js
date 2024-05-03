@@ -87,7 +87,13 @@ toggleContainer.addEventListener("click", function() {
         });
     });
 
-
+// Function to store the selected preferences in the session storage
+function storeSelectedPreferences() {
+    const selectedAllergies = Array.from(allergies).filter(allergy => allergy.classList.contains('active')).map(allergy => allergy.getAttribute('data-value'));
+    const selectedIngredients = Array.from(ingredients).filter(ingredient => ingredient.classList.contains('active')).map(ingredient => ingredient.getAttribute('data-value'));
+    sessionStorage.setItem('selectedAllergies', JSON.stringify(selectedAllergies));
+    sessionStorage.setItem('selectedIngredients', JSON.stringify(selectedIngredients));
+}
 
 
 
@@ -115,34 +121,72 @@ queryButton.addEventListener('click', function() {
     const durationInDays = isWeeks ? timeNumber * 7 : timeNumber;
     
     // Before using diets.join(','), ensure it's an array. If it's a string, split it into an array.
-	const dietsArray = typeof diets === 'string' ? diets.split(',') : diets;
+	//const dietsArray = typeof diets === 'string' ? diets.split(',') : diets;
+
+    // Retrieve diets and glutenFree from the session storage
+    const diets = sessionStorage.getItem('diets') || '';
+    const glutenFree = sessionStorage.getItem('glutenFree') === 'true';
+
+    // Store the additional query parameters in the session storage
+    sessionStorage.setItem('days', durationInDays.toString());
+    sessionStorage.setItem('excludedIngredients', excludedIngredients);
 
     // Log for debugging
     console.log(`Duration in Days: ${durationInDays}`);
     console.log(`Diets: ${diets}`);
     console.log(`Excluded Ingredients: ${excludedIngredients}`);
+    console.log(`Gluten Free: ${glutenFree}`);
+    
+     // Store the selected preferences in the session storage
+    storeSelectedPreferences();
 
-    // Prepare URL search parameters
-    const searchParams = new URLSearchParams({
-        days: durationInDays,
-        diets: dietsArray.join(','), // Now using dietsArray to ensure it's correctly formatted as an array
-        excludedIngredients: encodeURIComponent(excludedIngredients),
-        glutenFree: glutenFree.toString() // Ensure glutenFree is a boolean
-    }).toString();
 
-    // Log final query string for debugging
-    console.log('Query Parameters:', searchParams);
-
-    // Redirect to results.html with parameters
-    window.location.href = `results.html?${searchParams}`;
+    // Make a request to the backend to get the next page
+    fetch('/results')
+        .then(response => response.text())
+        .then(html => {
+            // Replace the current page with the received HTML
+            document.open();
+            document.write(html);
+            document.close();
+        })
+        .catch(error => console.error('Error:', error));
 });
-
-
-
-
-
 
 
     // Set the initial state of the query button based on allergies selection
     updateQueryButtonState();
+    
+    // Function to retrieve the selected preferences from the session storage
+function retrieveSelectedPreferences() {
+    const storedAllergies = sessionStorage.getItem('selectedAllergies');
+    const storedIngredients = sessionStorage.getItem('selectedIngredients');
+    if (storedAllergies) {
+        JSON.parse(storedAllergies).forEach(allergy => {
+            const allergyElement = document.querySelector(`.preference[data-value="${allergy}"]`);
+            if (allergyElement) {
+                allergyElement.classList.add('active');
+            }
+        });
+    }
+    if (storedIngredients) {
+        JSON.parse(storedIngredients).forEach(ingredient => {
+            const ingredientElement = document.querySelector(`.preference[data-value="${ingredient}"]`);
+            if (ingredientElement) {
+                ingredientElement.classList.add('active');
+            }
+        });
+    }
+    updateQueryButtonState();
+}
+
+// Call retrieveSelectedPreferences on page load
+retrieveSelectedPreferences();
+    
+    
+    
+    
+    
+    
+    
 });

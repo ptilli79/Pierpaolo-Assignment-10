@@ -26,8 +26,11 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+        	.csrf()
+        	.and()
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/login", "/register", "/error", "/public/**").permitAll()
+            	.requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/login", "/register", "/error", "/index.html", "/allergies", "/recipes/filtered", "/allergies-and-ingredients.html", "/results", "/select-exclusions").permitAll()
                 .requestMatchers(
                     "/mealplanner/week",
                     "/recipes/random",
@@ -49,6 +52,7 @@ public class SecurityConfiguration {
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout")
                 .permitAll();
+                
 
         return http.build();
     }

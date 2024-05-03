@@ -69,14 +69,62 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
 
-// Submit button click event
-submitButton.addEventListener('click', function() {
+	// Submit button click event
+	submitButton.addEventListener('click', function() {
     if (selectedPreferences.length > 0) {
         const diets = selectedPreferences.join(','); // Convert array to comma-separated string
         const glutenFree = selectedPreferences.includes('gluten-free'); // Check if 'gluten-free' is selected
-        const queryParameters = `diets=${diets}&glutenFree=${glutenFree}`;
-        window.location.href = `allergies-and-ingredients.html?${queryParameters}`;
+
+        // Store the query parameters in the session storage
+        sessionStorage.setItem('diets', diets);
+        sessionStorage.setItem('glutenFree', glutenFree.toString());
+        
+        // Store the selected preferences in the session storage
+        storeSelectedPreferences();
+
+        // Make a request to the backend to get the next page
+        fetch('/allergies')
+            .then(response => response.text())
+            .then(html => {
+                // Replace the current page with the received HTML
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => console.error('Error:', error));
     }
 });
 
+// ... (existing code)
+
+// Function to store the selected preferences in the session storage
+function storeSelectedPreferences() {
+    sessionStorage.setItem('selectedPreferences', JSON.stringify(selectedPreferences));
+}
+
+// Function to retrieve the selected preferences from the session storage
+function retrieveSelectedPreferences() {
+    const storedPreferences = sessionStorage.getItem('selectedPreferences');
+    if (storedPreferences) {
+        selectedPreferences = JSON.parse(storedPreferences);
+        selectedPreferences.forEach(pref => {
+            const prefElement = document.querySelector(`.preference[data-value="${pref}"]`);
+            if (prefElement) {
+                prefElement.classList.add('active');
+            }
+        });
+        updateState();
+    }
+}
+
+// Call retrieveSelectedPreferences on page load
+retrieveSelectedPreferences();
+
+// ... (existing code)
+
+
+
+
 });
+
+
