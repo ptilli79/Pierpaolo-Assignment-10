@@ -9,8 +9,8 @@ import java.util.Map;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.stereotype.Repository;
 
-import com.projects.cavany.dto.RecipeDetailsDTO;
-import com.projects.cavany.dto.WeeklyPlannerResponse;
+import com.projects.cavany.dto.MealPlanner.WeeklyPlannerResponse;
+import com.projects.cavany.dto.RecipeDetails.RecipeDetailsDTO;
 
 
 @Repository

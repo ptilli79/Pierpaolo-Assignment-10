@@ -12,11 +12,11 @@ import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.data.neo4j.core.Neo4jTemplate;
 import org.springframework.stereotype.Service;
 
-import com.projects.cavany.dto.ComplexSearchResultItemDTO;
-import com.projects.cavany.dto.ComplexSearchResultsDTO;
-import com.projects.cavany.dto.ExtendedIngredientDTO;
-import com.projects.cavany.dto.RecipeDetailsDTO;
-import com.projects.cavany.dto.RecipeWithIngredientsDTOFromEntity;
+import com.projects.cavany.dto.ComplexSearch.ComplexSearchResultItemDTO;
+import com.projects.cavany.dto.ComplexSearch.ComplexSearchResultsDTO;
+import com.projects.cavany.dto.RecipeDetails.ExtendedIngredientDTO;
+import com.projects.cavany.dto.RecipeDetails.RecipeDetailsDTO;
+import com.projects.cavany.dto.RecipeDetails.RecipeWithIngredientsDTOFromEntity;
 import com.projects.cavany.repository.RecipeDetailsRepository;
 
 @Service

@@ -10,8 +10,8 @@ import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.projects.cavany.domain.RecipeDetails;
-import com.projects.cavany.dto.RecipeWithIngredientsDTOFromEntity;
+import com.projects.cavany.domain.RecipeDetails.RecipeDetails;
+import com.projects.cavany.dto.RecipeDetails.RecipeWithIngredientsDTOFromEntity;
 
 @Repository
 public interface RecipeDetailsRepositoryNeo4j extends Neo4jRepository<RecipeDetails, Long> {

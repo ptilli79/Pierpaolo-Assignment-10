@@ -142,15 +142,7 @@ queryButton.addEventListener('click', function() {
 
 
     // Make a request to the backend to get the next page
-    fetch('/results')
-        .then(response => response.text())
-        .then(html => {
-            // Replace the current page with the received HTML
-            document.open();
-            document.write(html);
-            document.close();
-        })
-        .catch(error => console.error('Error:', error));
+	window.location.href = '/results';
 });
 
 

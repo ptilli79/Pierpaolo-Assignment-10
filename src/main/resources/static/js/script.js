@@ -83,15 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         storeSelectedPreferences();
 
         // Make a request to the backend to get the next page
-        fetch('/allergies')
-            .then(response => response.text())
-            .then(html => {
-                // Replace the current page with the received HTML
-                document.open();
-                document.write(html);
-                document.close();
-            })
-            .catch(error => console.error('Error:', error));
+		window.location.href = '/allergies';
     }
 });
 

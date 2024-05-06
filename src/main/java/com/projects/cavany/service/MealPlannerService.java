@@ -11,10 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.projects.cavany.dto.Meal;
-import com.projects.cavany.dto.RecipeDetailsDTO;
-import com.projects.cavany.dto.WeeklyPlanner;
-import com.projects.cavany.dto.WeeklyPlannerResponse;
+import com.projects.cavany.dto.MealPlanner.Meal;
+import com.projects.cavany.dto.MealPlanner.WeeklyPlanner;
+import com.projects.cavany.dto.MealPlanner.WeeklyPlannerResponse;
+import com.projects.cavany.dto.RecipeDetails.RecipeDetailsDTO;
 import com.projects.cavany.repository.RecipeDetailsRepository;
 import com.projects.cavany.repository.WeeklyPlannerRepository;
 import com.projects.cavany.web.UriStringBuilder;

@@ -1,9 +1,9 @@
 package com.projects.cavany.service;
 
 
-import com.projects.cavany.domain.Authorities;
-import com.projects.cavany.domain.RoleUser;
-import com.projects.cavany.domain.WebUser;
+import com.projects.cavany.domain.Security.Authorities;
+import com.projects.cavany.domain.Security.RoleUser;
+import com.projects.cavany.domain.Security.WebUser;
 import com.projects.cavany.repository.WebUserRepository;
 
 import jakarta.annotation.PostConstruct;

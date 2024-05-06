@@ -7,7 +7,7 @@ import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.projects.cavany.domain.ExtendedIngredient;
+import com.projects.cavany.domain.RecipeDetails.ExtendedIngredient;
 
 @Repository
 public interface ExtendedIngredientRepositoryNeo4j extends Neo4jRepository<ExtendedIngredient, Long> {

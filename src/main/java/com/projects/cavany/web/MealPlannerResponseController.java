@@ -35,16 +35,44 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.projects.cavany.domain.AnalyzedInstruction;
-import com.projects.cavany.domain.Equipment;
-import com.projects.cavany.domain.ExtendedIngredient;
-import com.projects.cavany.domain.Ingredient;
-import com.projects.cavany.domain.MetricSystem;
-import com.projects.cavany.domain.ProductMatch;
-import com.projects.cavany.domain.RecipeDetails;
-import com.projects.cavany.domain.Step;
-import com.projects.cavany.domain.WinePairing;
+import com.projects.cavany.domain.RecipeDetails.ExtendedIngredient;
+import com.projects.cavany.domain.RecipeDetails.MetricSystem;
+import com.projects.cavany.domain.RecipeDetails.ProductMatch;
+import com.projects.cavany.domain.RecipeDetails.RecipeDetails;
+import com.projects.cavany.domain.RecipeDetails.WinePairing;
+import com.projects.cavany.domain.RecipeDetails.AnalyzedInstruction.AnalyzedInstruction;
+import com.projects.cavany.domain.RecipeDetails.AnalyzedInstruction.Equipment;
+import com.projects.cavany.domain.RecipeDetails.AnalyzedInstruction.Ingredient;
+import com.projects.cavany.domain.RecipeDetails.AnalyzedInstruction.Step;
+import com.projects.cavany.domain.RecipeDetails.Nutrition.CaloricBreakdown;
+import com.projects.cavany.domain.RecipeDetails.Nutrition.IngredientNutrition;
+import com.projects.cavany.domain.RecipeDetails.Nutrition.NutrientEntity;
+import com.projects.cavany.domain.RecipeDetails.Nutrition.Nutrition;
+import com.projects.cavany.domain.RecipeDetails.Nutrition.NutritionProperty;
+import com.projects.cavany.domain.RecipeDetails.Nutrition.WeightPerServing;
 import com.projects.cavany.dto.*;
+import com.projects.cavany.dto.ComplexSearch.ComplexSearchResultItemDTO;
+import com.projects.cavany.dto.ComplexSearch.ComplexSearchResultsDTO;
+import com.projects.cavany.dto.ComplexSearch.RandomSearchResponse;
+import com.projects.cavany.dto.MealPlanner.DailyPlanner;
+import com.projects.cavany.dto.MealPlanner.WeeklyPlannerResponse;
+import com.projects.cavany.dto.RecipeDetails.BulkRecipeDetailsDTO;
+import com.projects.cavany.dto.RecipeDetails.ExtendedIngredientDTO;
+import com.projects.cavany.dto.RecipeDetails.MeasuresDTO;
+import com.projects.cavany.dto.RecipeDetails.RecipeDetailsDTO;
+import com.projects.cavany.dto.RecipeDetails.RecipeWithIngredientsDTOFromEntity;
+import com.projects.cavany.dto.RecipeDetails.AnalyzedInstruction.AnalyzedInstructionDTO;
+import com.projects.cavany.dto.RecipeDetails.AnalyzedInstruction.EquipmentDTO;
+import com.projects.cavany.dto.RecipeDetails.AnalyzedInstruction.IngredientDTO;
+import com.projects.cavany.dto.RecipeDetails.AnalyzedInstruction.StepDTO;
+import com.projects.cavany.dto.RecipeDetails.Nutrition.CaloricBreakdownDTO;
+import com.projects.cavany.dto.RecipeDetails.Nutrition.IngredientNutritionDTO;
+import com.projects.cavany.dto.RecipeDetails.Nutrition.NutrientDTO;
+import com.projects.cavany.dto.RecipeDetails.Nutrition.NutritionDTO;
+import com.projects.cavany.dto.RecipeDetails.Nutrition.NutritionPropertyDTO;
+import com.projects.cavany.dto.RecipeDetails.Nutrition.WeightPerServingDTO;
+import com.projects.cavany.dto.RecipeDetails.WinePairing.ProductMatchDTO;
+import com.projects.cavany.dto.RecipeDetails.WinePairing.WinePairingDTO;
 import com.projects.cavany.repository.DailyPlannerRepository;
 import com.projects.cavany.repository.ExtendedIngredientRepositoryNeo4j;
 import com.projects.cavany.repository.RecipeDetailsRepository;
@@ -324,26 +352,33 @@ public class MealPlannerResponseController {
 
 
 	    @GetMapping("/recipes/fetchRecipes")
-	    public void fetchRecipes() throws IOException {
+	    //public void fetchRecipes() throws IOException {
+	    public void fetchRecipes(@RequestParam(required = false) Long startId) throws IOException {
+
 	        RestTemplate restTemplate = new RestTemplate();
 	        int requestsMade = 0;
 	        AtomicInteger recipesSaved = new AtomicInteger();
 	        Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAllIds().stream().collect(Collectors.toSet());
 	        Optional<Long> maxIdInDb = recipeDetailsRepositoryNeo4j.findMaxId();
-	        long startId = maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0;
+	        //long startId = maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0;
+	        long startIdValue = startId != null ? startId : (maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0);
+
 	        final int maxRetries = 3;
 
-	        for (long i = startId; i < maxIds; i += batchSize) {
+	        for (long i = startIdValue; i < maxIds; i += batchSize) {
 	            StringBuilder ids = new StringBuilder();
 	            for (long j = i; j < i + batchSize && j < maxIds; j++) {
-	                if (!existingIds.contains(j)) {
-	                    if (ids.length() > 0) ids.append(",");
-	                    ids.append(j);
+	                if (ids.length() > 0) {
+	                    ids.append(",");
 	                }
+	                ids.append(j);
 	            }
 	            if (ids.length() == 0) continue;
+	       
 
-	            String url = uriString.toStringRecipeBulkInformation() + "?ids=" + ids.toString() + "&apiKey=" + uriString.getApiKey();
+	            
+
+	            String url = uriString.toStringRecipeBulkInformation() + "?ids=" + ids.toString() + "&includeNutrition=true&apiKey=" + uriString.getApiKey();
 	            ResponseEntity<BulkRecipeDetailsDTO[]> response = null;
 	            int retryCount = 0;
 
@@ -397,7 +432,6 @@ public class MealPlannerResponseController {
 	        }
 	    }
    
-	    @PreAuthorize("hasRole('ROLE_USER')")
 	    @GetMapping("/recipes/filtered")
 	    public ResponseEntity<Map<String, Object>> fetchFilteredRecipes(
 	            @RequestParam(required = false) List<String> diets,
@@ -549,7 +583,7 @@ public class MealPlannerResponseController {
 		return dayPlannerRepo.save(responseEntity.getBody());
 	}
 		
-	@GetMapping("/recipe/{recipeId}")
+	@GetMapping("/recipes/{recipeId}")
 	public ResponseEntity<?> getRecipeInformation(@PathVariable String recipeId) {
 	    try {
 	        RestTemplate rt = new RestTemplate();
@@ -743,6 +777,45 @@ public class MealPlannerResponseController {
 	        
 	        recipe.setWinePairing(winePairing);
 	    }
+	    // Convert Nutrition from DTO to Entity
+	    NutritionDTO nutritionDTO = dto.getNutrition();
+	    if (nutritionDTO != null) {
+	        Nutrition nutrition = new Nutrition();
+	        
+	        // Convert nutrients
+	        List<NutrientEntity> nutrients = nutritionDTO.getNutrients().stream()
+	            .map(this::convertToNutrientEntity)
+	            .collect(Collectors.toList());
+	        nutrition.setNutrients(nutrients);
+	        
+	        // Convert properties
+	        List<NutritionProperty> properties = nutritionDTO.getProperties().stream()
+	            .map(this::convertToNutritionPropertyEntity)
+	            .collect(Collectors.toList());
+	        nutrition.setProperties(properties);
+	        
+	        // Convert ingredients
+	        List<IngredientNutrition> ingredients = nutritionDTO.getIngredients().stream()
+	            .map(this::convertToIngredientNutritionEntity)
+	            .collect(Collectors.toList());
+	        nutrition.setIngredients(ingredients);
+	        
+	        // Convert caloric breakdown
+	        CaloricBreakdownDTO caloricBreakdownDTO = nutritionDTO.getCaloricBreakdown();
+	        if (caloricBreakdownDTO != null) {
+	            CaloricBreakdown caloricBreakdown = convertToCaloricBreakdownEntity(caloricBreakdownDTO);
+	            nutrition.setCaloricBreakdown(caloricBreakdown);
+	        }
+	        
+	        // Convert weight per serving
+	        WeightPerServingDTO weightPerServingDTO = nutritionDTO.getWeightPerServing();
+	        if (weightPerServingDTO != null) {
+	            WeightPerServing weightPerServing = convertToWeightPerServingEntity(weightPerServingDTO);
+	            nutrition.setWeightPerServing(weightPerServing);
+	        }
+	        
+	        recipe.setNutrition(nutrition);
+	    }
 	    
 	    return recipe;
 	}
@@ -778,6 +851,53 @@ public class MealPlannerResponseController {
 	    productMatch.setLink(dto.getLink());
 	    // Add more fields if necessary
 	    return productMatch;
+	}
+	
+	private NutrientEntity convertToNutrientEntity(NutrientDTO dto) {
+	    NutrientEntity nutrient = new NutrientEntity();
+	    nutrient.setName(dto.getName());
+	    nutrient.setAmount(dto.getAmount());
+	    nutrient.setUnit(dto.getUnit());
+	    nutrient.setPercentOfDailyNeeds(dto.getPercentOfDailyNeeds());
+	    return nutrient;
+	}
+
+	private NutritionProperty convertToNutritionPropertyEntity(NutritionPropertyDTO dto) {
+	    NutritionProperty property = new NutritionProperty();
+	    property.setName(dto.getName());
+	    property.setAmount(dto.getAmount());
+	    property.setUnit(dto.getUnit());
+	    return property;
+	}
+
+	private IngredientNutrition convertToIngredientNutritionEntity(IngredientNutritionDTO dto) {
+	    IngredientNutrition ingredientNutrition = new IngredientNutrition();
+	    ingredientNutrition.setIngredientId(dto.getId());
+	    ingredientNutrition.setName(dto.getName());
+	    ingredientNutrition.setAmount(dto.getAmount());
+	    ingredientNutrition.setUnit(dto.getUnit());
+	    
+	    List<NutrientEntity> nutrients = dto.getNutrients().stream()
+	        .map(this::convertToNutrientEntity)
+	        .collect(Collectors.toList());
+	    ingredientNutrition.setNutrients(nutrients);
+	    
+	    return ingredientNutrition;
+	}
+
+	private CaloricBreakdown convertToCaloricBreakdownEntity(CaloricBreakdownDTO dto) {
+	    CaloricBreakdown caloricBreakdown = new CaloricBreakdown();
+	    caloricBreakdown.setPercentProtein(dto.getPercentProtein());
+	    caloricBreakdown.setPercentFat(dto.getPercentFat());
+	    caloricBreakdown.setPercentCarbs(dto.getPercentCarbs());
+	    return caloricBreakdown;
+	}
+
+	private WeightPerServing convertToWeightPerServingEntity(WeightPerServingDTO dto) {
+	    WeightPerServing weightPerServing = new WeightPerServing();
+	    weightPerServing.setAmount(dto.getAmount());
+	    weightPerServing.setUnit(dto.getUnit());
+	    return weightPerServing;
 	}
 
 }

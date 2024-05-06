@@ -32,13 +32,12 @@ public class SecurityConfiguration {
             	.requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/login", "/register", "/error", "/index.html", "/allergies", "/recipes/filtered", "/allergies-and-ingredients.html", "/results", "/select-exclusions").permitAll()
                 .requestMatchers(
-                    "/mealplanner/week",
+                    "/mealplanner",
                     "/recipes/random",
                     "/complex/search",
                     "/recipes/informationBulk",
-                    "/recipes/fetchRecipes",
                     "/mealplanner/day",
-                    "/recipe/{recipeId}",
+                    "/recipes",
                     "/mealplanner/weeklyMealsRepo",
                     "/mealplanner/dailyMealsRepo",
                     "/recipe/detailsRepo",

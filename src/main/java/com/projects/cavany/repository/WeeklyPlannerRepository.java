@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.springframework.stereotype.Repository;
 
-import com.projects.cavany.dto.WeeklyPlannerResponse;
+import com.projects.cavany.dto.MealPlanner.WeeklyPlannerResponse;
 
 
 @Repository

@@ -73,7 +73,7 @@ public class UriStringBuilder {
 		}
 		
 		public String toStringRecipeInformation(String recipeId) {
-			return base + recipeInformation + "/" + recipeId + "/information?apiKey=" + apiKey;
+			return base + recipeInformation + "/" + recipeId + "/information?includeNutrition=true&apiKey=" + apiKey;
 			
 		}
 		

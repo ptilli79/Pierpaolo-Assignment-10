@@ -3,8 +3,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-
-import com.projects.cavany.domain.WebUser;
+import com.projects.cavany.domain.Security.WebUser;
 
 import java.util.Collection;
 
