@@ -14,7 +14,7 @@ public class ExtendedIngredient {
     @Id @GeneratedValue(GeneratedValue.UUIDGenerator.class)
     private UUID uuid;  // This should be UUID instead of Long
     @Property
-    private Long id;  // This keeps the original ID from your external API.
+    private Long id;  // This keeps the original ID from the external API.
 	@Property
     private String aisle;
 	@Property

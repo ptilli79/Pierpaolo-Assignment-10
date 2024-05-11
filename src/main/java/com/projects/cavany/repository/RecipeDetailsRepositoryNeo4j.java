@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
@@ -14,7 +15,7 @@ import com.projects.cavany.domain.RecipeDetails.RecipeDetails;
 import com.projects.cavany.dto.RecipeDetails.RecipeWithIngredientsDTOFromEntity;
 
 @Repository
-public interface RecipeDetailsRepositoryNeo4j extends Neo4jRepository<RecipeDetails, Long> {
+public interface RecipeDetailsRepositoryNeo4j extends Neo4jRepository<RecipeDetails, UUID> {
 	@Query("MATCH (r:RecipeDetails) RETURN max(r.Id)")
 	Optional<Long> findMaxId();
 	
@@ -39,6 +40,11 @@ public interface RecipeDetailsRepositoryNeo4j extends Neo4jRepository<RecipeDeta
     @Query("MATCH (recipe:RecipeDetails) WHERE recipe.Id IN $recipeIds " +
             "RETURN recipe ")
 	List<RecipeDetails> findLimitedRecipesByIds(List<Long> recipeIds);
+    
+    @Query("MATCH (recipe:RecipeDetails {Id: $id}) RETURN recipe")
+    Optional<RecipeDetails> findRecipeById(Long id);
+    
+    
     
 
 

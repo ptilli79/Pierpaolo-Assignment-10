@@ -1,5 +1,7 @@
 package com.projects.cavany.domain.RecipeDetails;
 
+import java.util.UUID;
+
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
@@ -7,10 +9,10 @@ import org.springframework.data.neo4j.core.schema.Property;
 
 @Node
 public class ProductMatch {
-	@Id @GeneratedValue
-	private Long neo4jId;
-	@Property
-    private Long id;
+    @Id @GeneratedValue(GeneratedValue.UUIDGenerator.class)
+    private UUID uuid;  // This should be UUID instead of Long
+    @Property
+    private Long id;  // This keeps the original ID from the external API.
 	@Property
     private String title;
 	@Property
@@ -29,12 +31,13 @@ public class ProductMatch {
     private String link;
     
     //Getters and setters for all fields
-	public Long getNeo4jId() {
-		return neo4jId;
+	public UUID getUuid() {
+		return uuid;
 	}
-	public void setNeo4jId(Long neo4jId) {
-		this.neo4jId = neo4jId;
+	public void setUuid(UUID uuid) {
+		this.uuid = uuid;
 	}
+
 	public Long getId() {
 		return id;
 	}

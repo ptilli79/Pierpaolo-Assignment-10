@@ -52,6 +52,8 @@ public class RecipeDetailsService {
     private AnalyzedInstructionRepositoryNeo4j analyzedInstructionRepository;
     @Autowired
     private NutritionRepositoryNeo4j nutritionRepository;
+    
+
     @Autowired
     private Neo4jClient neo4jClient;
 
@@ -60,9 +62,22 @@ public class RecipeDetailsService {
         this.neo4jClient = neo4jClient;
     }
       
+
+    @Autowired
+    public RecipeDetailsService(RecipeDetailsRepositoryNeo4j recipeDetailsRepository, ExtendedIngredientRepositoryNeo4j extendedIngredientRepository,
+                         WinePairingRepositoryNeo4j winePairingRepository, AnalyzedInstructionRepositoryNeo4j analyzedInstructionRepository,
+                         NutritionRepositoryNeo4j nutritionRepository) {
+        this.recipeDetailsRepository = recipeDetailsRepository;
+        this.extendedIngredientRepository = extendedIngredientRepository;
+        this.winePairingRepository = winePairingRepository;
+        this.analyzedInstructionRepository = analyzedInstructionRepository;
+        this.nutritionRepository = nutritionRepository;
+    }
+
+    
     @Transactional
     public void saveOrUpdateRecipeDetails(RecipeDetails recipeDetails) {
-        Optional<RecipeDetails> existingRecipe = recipeDetailsRepository.findById(recipeDetails.getId());
+        Optional<RecipeDetails> existingRecipe = recipeDetailsRepository.findRecipeById(recipeDetails.getId());
         if (existingRecipe.isPresent()) {
             updateExistingRecipe(existingRecipe.get(), recipeDetails);
         } else {
@@ -73,94 +88,56 @@ public class RecipeDetailsService {
 
     private void updateExistingRecipe(RecipeDetails existingNeo4j, RecipeDetails newFetch) {
     	// Check and update ingredients
-    	if (newFetch.getExtendedIngredients() != null) {
-    	    // First, delete existing ingredients associated with the recipe
-    	    if (existingNeo4j.getId() != null) {
-    	        extendedIngredientRepository.deleteIngredientsByRecipeId(existingNeo4j.getId());
-    	    }
+    	saveWithIngredients(existingNeo4j,newFetch.getExtendedIngredients());
+        updateWinePairing(existingNeo4j, newFetch.getWinePairing());
+        updateAnalyzedInstructions(existingNeo4j, newFetch.getAnalyzedInstructions());
+        updateNutrition(existingNeo4j, newFetch.getNutrition());
 
-    	    // Merge new ingredients
-    	    existingNeo4j.setExtendedIngredients(
-    	        newFetch.getExtendedIngredients().stream()
-    	            .map(ingredient -> {
-    	                if (ingredient.getUuid() == null) {
-    	                    ingredient.setUuid(UUID.randomUUID());
-    	                }
-    	                return extendedIngredientRepository.merge(
-    	                    ingredient.getUuid(), ingredient.getId(), ingredient.getAisle(), ingredient.getImage(),
-    	                    ingredient.getConsistency(), ingredient.getName(), ingredient.getNameClean(),
-    	                    ingredient.getOriginal(), ingredient.getOriginalName(), ingredient.getAmount(),
-    	                    ingredient.getUnit(), ingredient.getMeta());
-    	            })
-    	            .collect(Collectors.toList())
-    	    );
-    	}
-/*
-    	// Check and update wine pairing
-    	if (newFetch.getWinePairing() != null) {
-    	    // First, delete existing wine pairing associated with the recipe
-    	    if (existingNeo4j.getId() != null) {
-    	        winePairingRepository.deleteWinePairingByRecipeId(existingNeo4j.getId());
-    	    }
-
-    	    // Merge new wine pairing
-    	    existingNeo4j.setWinePairing(winePairingRepository.mergeWinePairing(newFetch.getWinePairing()));
-    	}
-
-    	// Check and update analyzed instructions
-    	if (newFetch.getAnalyzedInstructions() != null) {
-    	    // First, delete existing analyzed instructions associated with the recipe
-    	    if (existingNeo4j.getId() != null) {
-    	        analyzedInstructionRepository.deleteInstructionsByRecipeId(existingNeo4j.getId());
-    	    }
-
-    	    // Merge new analyzed instructions
-    	    existingNeo4j.setAnalyzedInstructions(
-    	        newFetch.getAnalyzedInstructions().stream()
-    	            .map(analyzedInstructionRepository::mergeInstruction)
-    	            .collect(Collectors.toList())
-    	    );
-    	}
-
-    	// Check and update nutrition
-//    	if (newFetch.getNutrition() != null) {
-    	    // First, delete existing nutrition associated with the recipe
-//    	    if (existingNeo4j.getId() != null) {
-//    	        nutritionRepository.deleteNutritionByRecipeId(existingNeo4j.getId());
-//    	    }
-
-    	    // Merge new nutrition
-//    	    existingNeo4j.setNutrition(nutritionRepository.mergeNutrition(newFetch.getNutrition()));
-//    	}
-*/
         // Save the updated recipe details
         recipeDetailsRepository.save(existingNeo4j);
     }
 
+    @Transactional
+    public RecipeDetails saveWithIngredients(RecipeDetails existingRecipe, List<ExtendedIngredient> newIngredients) {
+        if (newIngredients != null && existingRecipe.getId() != null) {
+            // Delete existing ingredients
+            extendedIngredientRepository.deleteIngredientsByRecipeId(existingRecipe.getId());
 
-    private void updateWinePairing(RecipeDetails recipe, WinePairing newPairing) {
-        if (newPairing != null) {
-            WinePairing managed = winePairingRepository.save(newPairing);
-            recipe.setWinePairing(managed);
-        } else {
-            recipe.setWinePairing(null);
+            // Set new ingredients with UUIDs
+            existingRecipe.setExtendedIngredients(newIngredients.stream().map(ingredient -> {
+                if (ingredient.getUuid() == null) {
+                    ingredient.setUuid(UUID.randomUUID());
+                }
+                return ingredient;
+            }).collect(Collectors.toList()));
+
+            // Save the recipe with new ingredients
+            return recipeDetailsRepository.save(existingRecipe);
+        }
+        return existingRecipe;
+    }
+
+    private void updateWinePairing(RecipeDetails recipe, WinePairing newWinePairing) {
+        if (newWinePairing != null && recipe.getId() != null) {
+            winePairingRepository.deleteWinePairingByRecipeId(recipe.getId());
+            // Assuming the merge method ensures correct properties setting
+            recipe.setWinePairing(winePairingRepository.save(newWinePairing));
         }
     }
 
-    private void updateInstructions(RecipeDetails recipe, List<AnalyzedInstruction> newInstructions) {
-        recipe.getAnalyzedInstructions().clear();
-        newInstructions.forEach(instruction -> {
-            AnalyzedInstruction managed = analyzedInstructionRepository.save(instruction);
-            recipe.getAnalyzedInstructions().add(managed);
-        });
+    private void updateAnalyzedInstructions(RecipeDetails recipe, List<AnalyzedInstruction> newInstructions) {
+        if (newInstructions != null && recipe.getId() != null) {
+            analyzedInstructionRepository.deleteInstructionsByRecipeId(recipe.getId());
+            recipe.setAnalyzedInstructions(newInstructions.stream()
+                .map(analyzedInstructionRepository::save)
+                .collect(Collectors.toList()));
+        }
     }
 
     private void updateNutrition(RecipeDetails recipe, Nutrition newNutrition) {
-        if (newNutrition != null) {
-            Nutrition managed = nutritionRepository.save(newNutrition);
-            recipe.setNutrition(managed);
-        } else {
-            recipe.setNutrition(null);
+        if (newNutrition != null && recipe.getId() != null) {
+            nutritionRepository.deleteNutritionByRecipeId(recipe.getId());
+            recipe.setNutrition(nutritionRepository.save(newNutrition));
         }
     }
     

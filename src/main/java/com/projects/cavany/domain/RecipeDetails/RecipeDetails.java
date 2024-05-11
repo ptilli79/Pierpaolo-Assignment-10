@@ -2,6 +2,7 @@ package com.projects.cavany.domain.RecipeDetails;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -18,8 +19,10 @@ import com.projects.cavany.dto.RecipeDetails.WinePairing.WinePairingDTO;
 
 @Node
 public class RecipeDetails {
-	@Id 
-    private Long Id;
+	@Id @GeneratedValue(GeneratedValue.UUIDGenerator.class)
+    private UUID uuid;
+    @Property
+    private Long Id;  // Maintaining this for compatibility
     @Property
     private String title;
     @Property
@@ -103,6 +106,12 @@ public class RecipeDetails {
     
     
     // Constructors, getters, and setters
+	public UUID getUuid() {
+		return uuid;
+	}
+	public void setUuid(UUID uuid) {
+		this.uuid = uuid;
+	}
 	public Long getId() {
 		return Id;
 	}

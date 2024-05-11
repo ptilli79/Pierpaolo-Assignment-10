@@ -16,5 +16,6 @@ public interface WinePairingRepositoryNeo4j extends Neo4jRepository<WinePairing,
     
     @Query("MATCH (r:RecipeDetails {Id: $recipeId})-[rel:HAS_WINE_PAIRING]->(wp:WinePairing) DETACH DELETE wp")
     void deleteWinePairingByRecipeId(Long recipeId);
+    
 
 }

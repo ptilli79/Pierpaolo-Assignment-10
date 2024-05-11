@@ -31,6 +31,5 @@ public interface ExtendedIngredientRepositoryNeo4j extends Neo4jRepository<Exten
 	
     @Query("MATCH (r:RecipeDetails {Id: $recipeId})-[rel:HAS_INGREDIENT]->(i:ExtendedIngredient) DETACH DELETE i")
     void deleteIngredientsByRecipeId(Long recipeId);
-    
 	}
 
