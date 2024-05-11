@@ -90,7 +90,7 @@ public class RecipeDetails {
     // Consider relationships for complex types
     // For example, List<String> could be managed as related nodes
     @Relationship(type = "HAS_INGREDIENT", direction = Relationship.Direction.OUTGOING)
-    private List<ExtendedIngredient> extendedIngredients = new ArrayList<>();
+    private List<ExtendedIngredient> extendedIngredients;
     
     @Relationship(type = "HAS_WINE_PAIRING", direction = Relationship.Direction.OUTGOING)
     private WinePairing winePairing;

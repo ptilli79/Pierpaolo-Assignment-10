@@ -80,6 +80,8 @@ import com.projects.cavany.repository.RecipeDetailsRepositoryNeo4j;
 import com.projects.cavany.repository.WeeklyPlannerRepository;
 import com.projects.cavany.service.GenerateRecipeService;
 import com.projects.cavany.service.MealPlannerService;
+import com.projects.cavany.service.RecipeDetailsService;
+
 import org.springframework.web.client.HttpServerErrorException;
 
 //import ch.qos.logback.classic.Logger;
@@ -108,9 +110,10 @@ public class MealPlannerResponseController {
     private RecipeDetailsRepository recipeDetailsRepository;    
     @Autowired
     private RecipeDetailsRepositoryNeo4j recipeDetailsRepositoryNeo4j;
-    
     @Autowired
-    private ExtendedIngredientRepositoryNeo4j extendedIngredientRepositoryNeo4j;
+    private RecipeDetailsService recipeDetailsService;
+    
+  
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
@@ -416,7 +419,9 @@ public class MealPlannerResponseController {
 	            if (response != null && response.getBody() != null) {
 	                Arrays.stream(response.getBody()).forEach(recipeDetailsDTO -> {
 	                    RecipeDetails recipe = convertToRecipeEntity(recipeDetailsDTO);
-	                    recipeDetailsRepositoryNeo4j.save(recipe);
+	                    //recipeDetailsRepositoryNeo4j.save(recipe);
+	                    recipeDetailsService.saveOrUpdateRecipeDetails(recipe);
+	                    
 	                    recipesSaved.incrementAndGet();
 
 	                    if (recipesSaved.get() % 500 == 0) {

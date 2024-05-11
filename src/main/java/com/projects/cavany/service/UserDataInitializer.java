@@ -4,7 +4,7 @@ package com.projects.cavany.service;
 import com.projects.cavany.domain.Security.Authorities;
 import com.projects.cavany.domain.Security.RoleUser;
 import com.projects.cavany.domain.Security.WebUser;
-import com.projects.cavany.repository.WebUserRepository;
+import com.projects.cavany.repository.WebUserRepositoryNeo4j;
 
 import jakarta.annotation.PostConstruct;
 
@@ -20,23 +20,23 @@ import java.util.Set;
 
 @Service
 public class UserDataInitializer {
-    private final WebUserRepository webUserRepository;
+    private final WebUserRepositoryNeo4j webUserRepositoryNeo4j;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserDataInitializer(WebUserRepository webUserRepository, PasswordEncoder passwordEncoder) {
-        this.webUserRepository = webUserRepository;
+    public UserDataInitializer(WebUserRepositoryNeo4j webUserRepositoryNeo4j, PasswordEncoder passwordEncoder) {
+        this.webUserRepositoryNeo4j = webUserRepositoryNeo4j;
         this.passwordEncoder = passwordEncoder;
     }
 
     @PostConstruct
     public void initializeUsers() {
-        if (webUserRepository.count() == 0) {
+        if (webUserRepositoryNeo4j.count() == 0) {
             WebUser adminUser = createUser("admin", "admin@example.com", "admin123", RoleUser.ROLE_ADMIN, Arrays.asList("read", "write", "update", "delete"));
             WebUser regularUser = createUser("user", "user@example.com", "user123", RoleUser.ROLE_USER, Arrays.asList("read"));
 
-            webUserRepository.save(adminUser);
-            webUserRepository.save(regularUser);
+            webUserRepositoryNeo4j.save(adminUser);
+            webUserRepositoryNeo4j.save(regularUser);
         }
     }
 

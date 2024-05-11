@@ -9,7 +9,8 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 
 @Node
 public class Nutrition {
-    @Id @GeneratedValue private Long id;
+    @Id @GeneratedValue 
+    private Long id;
     @Relationship(type = "HAS_NUTRIENT", direction = Relationship.Direction.OUTGOING)
     private List<NutrientEntity> nutrients;
     @Relationship(type = "HAS_PROPERTY", direction = Relationship.Direction.OUTGOING)
