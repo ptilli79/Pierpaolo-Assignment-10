@@ -1,15 +1,19 @@
 package com.projects.cavany.domain.RecipeDetails.Nutrition;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.Property;
 import org.springframework.data.neo4j.core.schema.Relationship;
+
+import com.projects.cavany.domain.RecipeDetails.RecipeDetails;
 
 @Node
 public class Nutrition {
-    @Id @GeneratedValue 
+    @Id 
     private Long id;
     @Relationship(type = "HAS_NUTRIENT", direction = Relationship.Direction.OUTGOING)
     private List<NutrientEntity> nutrients;
@@ -22,13 +26,26 @@ public class Nutrition {
     @Relationship(type = "HAS_WEIGHT_PER_SERVING", direction = Relationship.Direction.OUTGOING)
     private WeightPerServing weightPerServing;
     
+    
+    // Constructor that takes a RecipeDetails object and assigns its id to Nutrition's recipeId
+    public Nutrition(Long id) {
+        this.id = id;  // Assuming RecipeDetails has an getId() method returning Long
+    }
+    
     // Getters and setters
+//	public UUID getUuid() {
+//		return uuid;
+//	}
+//	public void setUuid(UUID uuid) {
+//		this.uuid = uuid;
+//	}
+    
 	public Long getId() {
 		return id;
 	}
-	public void setId(Long id) {
-		this.id = id;
-	}
+	//public void setId(Long id) {
+	//	this.id = id;
+	//}
 	public List<NutrientEntity> getNutrients() {
 		return nutrients;
 	}

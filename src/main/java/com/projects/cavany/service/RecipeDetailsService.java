@@ -85,13 +85,24 @@ public class RecipeDetailsService {
             recipeDetailsRepository.save(recipeDetails);
         }
     }
-
+    
+    @Transactional
+	public void saveOrUpdateNutrition(Nutrition nutrition) {
+        Optional<Nutrition> existingNutrition = nutritionRepository.findNutritionById(nutrition.getId());
+        if (existingNutrition.isPresent()) {
+            updateNutrition(existingNutrition.get().getId(), nutrition);
+        } else {
+            // Save new recipe
+            nutritionRepository.save(nutrition);
+        }
+		
+	}
     private void updateExistingRecipe(RecipeDetails existingNeo4j, RecipeDetails newFetch) {
     	// Check and update ingredients
     	saveWithIngredients(existingNeo4j,newFetch.getExtendedIngredients());
         updateWinePairing(existingNeo4j, newFetch.getWinePairing());
         updateAnalyzedInstructions(existingNeo4j, newFetch.getAnalyzedInstructions());
-        updateNutrition(existingNeo4j, newFetch.getNutrition());
+        //updateNutrition(existingNeo4j, newFetch.getNutrition());
 
         // Save the updated recipe details
         recipeDetailsRepository.save(existingNeo4j);
@@ -134,10 +145,13 @@ public class RecipeDetailsService {
         }
     }
 
-    private void updateNutrition(RecipeDetails recipe, Nutrition newNutrition) {
-        if (newNutrition != null && recipe.getId() != null) {
-            nutritionRepository.deleteNutritionByRecipeId(recipe.getId());
-            recipe.setNutrition(nutritionRepository.save(newNutrition));
+    private Nutrition updateNutrition(Long recipeId, Nutrition newNutrition) {
+        if (newNutrition != null && recipeId != null) {
+            nutritionRepository.deleteNutritionByRecipeId(recipeId);
+            return(nutritionRepository.save(newNutrition));
+        }
+        else {
+        	return null;
         }
     }
     
@@ -233,4 +247,10 @@ public class RecipeDetailsService {
 		// Add ingredients to the 'ingredients' list
 		return ingredients;
 	}
+
+
+
+
+
+
 }

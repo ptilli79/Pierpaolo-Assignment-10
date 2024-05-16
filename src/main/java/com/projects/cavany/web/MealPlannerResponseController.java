@@ -1,6 +1,7 @@
 package com.projects.cavany.web;
 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -50,7 +51,6 @@ import com.projects.cavany.domain.RecipeDetails.Nutrition.NutrientEntity;
 import com.projects.cavany.domain.RecipeDetails.Nutrition.Nutrition;
 import com.projects.cavany.domain.RecipeDetails.Nutrition.NutritionProperty;
 import com.projects.cavany.domain.RecipeDetails.Nutrition.WeightPerServing;
-import com.projects.cavany.dto.*;
 import com.projects.cavany.dto.ComplexSearch.ComplexSearchResultItemDTO;
 import com.projects.cavany.dto.ComplexSearch.ComplexSearchResultsDTO;
 import com.projects.cavany.dto.ComplexSearch.RandomSearchResponse;
@@ -75,6 +75,7 @@ import com.projects.cavany.dto.RecipeDetails.WinePairing.ProductMatchDTO;
 import com.projects.cavany.dto.RecipeDetails.WinePairing.WinePairingDTO;
 import com.projects.cavany.repository.DailyPlannerRepository;
 import com.projects.cavany.repository.ExtendedIngredientRepositoryNeo4j;
+import com.projects.cavany.repository.NutritionRepositoryNeo4j;
 import com.projects.cavany.repository.RecipeDetailsRepository;
 import com.projects.cavany.repository.RecipeDetailsRepositoryNeo4j;
 import com.projects.cavany.repository.WeeklyPlannerRepository;
@@ -87,6 +88,8 @@ import org.springframework.web.client.HttpServerErrorException;
 //import ch.qos.logback.classic.Logger;
 @RestController
 public class MealPlannerResponseController {
+	
+	private static final Logger log = LoggerFactory.getLogger(Nutrition.class);
 	
 	@Autowired
 	private WeeklyPlannerRepository weekPlannerRepo;
@@ -112,12 +115,14 @@ public class MealPlannerResponseController {
     private RecipeDetailsRepositoryNeo4j recipeDetailsRepositoryNeo4j;
     @Autowired
     private RecipeDetailsService recipeDetailsService;
+    @Autowired
+    private NutritionRepositoryNeo4j nutritionRepositoryNeo4j;
     
   
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
-    private static final int maxIds = 20000;
+    private static final int maxIds = 35000;
     private static final int batchSize = 50;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
     private final List<String> diets = Arrays.asList("Whole30"); // You can add more diets as needed
@@ -437,7 +442,94 @@ public class MealPlannerResponseController {
 	        }
 	    }
    
-	    @GetMapping("/recipes/filtered")
+	    @GetMapping("/recipes/fetchNutrition")
+	    //public void fetchRecipes() throws IOException {
+	    public void fetchNutrition(@RequestParam(required = false) Long startId) throws IOException {
+
+	        RestTemplate restTemplate = new RestTemplate();
+	        int requestsMade = 0;
+	        AtomicInteger recipesSaved = new AtomicInteger();
+	        //Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAllIds().stream().collect(Collectors.toSet());
+	        Optional<Long> maxIdInDb = recipeDetailsRepositoryNeo4j.findMaxId();
+	        //long startId = maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0;
+	        long startIdValue = startId != null ? startId : (maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0);
+
+	        final int maxRetries = 3;
+
+	        for (long i = startIdValue; i < maxIds; i += batchSize) {
+	            StringBuilder ids = new StringBuilder();
+	            for (long j = i; j < i + batchSize && j < maxIds; j++) {
+	                if (ids.length() > 0) {
+	                    ids.append(",");
+	                }
+	                ids.append(j);
+	            }
+	            if (ids.length() == 0) continue;
+	       
+
+	            
+
+	            String url = uriString.toStringRecipeBulkInformation() + "?ids=" + ids.toString() + "&includeNutrition=true&apiKey=" + uriString.getApiKey();
+	            ResponseEntity<BulkRecipeDetailsDTO[]> response = null;
+	            int retryCount = 0;
+
+	            while (retryCount < maxRetries) {
+	                if (requestsMade >= maxRequestsPerSecond) {
+	                    try {
+	                        Thread.sleep(rateLimitIntervalMillis);
+	                    } catch (InterruptedException e) {
+	                        Thread.currentThread().interrupt();
+	                    }
+	                    requestsMade = 0;
+	                }
+
+	                try {
+	                    System.out.println("Requesting URL: " + url);
+	                    response = restTemplate.getForEntity(url, BulkRecipeDetailsDTO[].class);
+	                    requestsMade++;
+	                    break; // Request successful
+	                } catch (ResourceAccessException | HttpClientErrorException | HttpServerErrorException e) {
+	                    System.err.println("Error accessing URL: " + url + ". Error: " + e.getMessage());
+	                    retryCount++;
+	                    if (retryCount >= maxRetries) {
+	                        System.err.println("Max retry attempts reached for URL: " + url);
+	                        break;
+	                    }
+	                    try {
+	                        System.out.println("Retrying after error... (" + retryCount + "/" + maxRetries + ")");
+	                        Thread.sleep(10000); // Wait for 10 seconds before retrying
+	                    } catch (InterruptedException ex) {
+	                        Thread.currentThread().interrupt();
+	                    }
+	                }
+	            }
+
+	            if (response != null && response.getBody() != null) {
+	                Arrays.stream(response.getBody()).forEach(recipeDetailsDTO -> {
+	                	Nutrition nutrition = new Nutrition (recipeDetailsDTO.getId());
+	                    nutrition = convertToNutritionEntity(nutrition,recipeDetailsDTO.getNutrition());
+	                    //recipeDetailsRepositoryNeo4j.save(recipe);
+	                    recipeDetailsService.saveOrUpdateNutrition(nutrition);
+	                    
+	                    recipesSaved.incrementAndGet();
+
+	                    if (recipesSaved.get() % 500 == 0) {
+	                        try {
+	                            System.out.println("Saved 500 nutrition objects, pausing...");
+	                            Thread.sleep(10000); // Wait for 10 seconds
+	                        } catch (InterruptedException e) {
+	                            Thread.currentThread().interrupt();
+	                        }
+	                    }
+	                });
+	            }
+	        }
+	    }
+	    
+
+
+
+		@GetMapping("/recipes/filtered")
 	    public ResponseEntity<Map<String, Object>> fetchFilteredRecipes(
 	            @RequestParam(required = false) List<String> diets,
 	            @RequestParam(required = false) List<String> excludedIngredientsFromRequest,
@@ -575,6 +667,14 @@ public class MealPlannerResponseController {
 
 	        return ResponseEntity.ok(Map.of("week", weeklyMealPlan));
 
+	    }
+		
+	    @GetMapping("/recipes/fectchNutritionfromDb/{id}")
+	    public ResponseEntity<?> getNutritionById(@PathVariable Long id) {
+	        Optional<Nutrition> nutrition = nutritionRepositoryNeo4j.findById(id);
+	        return nutrition
+	                .map(ResponseEntity::ok)
+	                .orElseGet(() -> ResponseEntity.notFound().build());
 	    }
 
 	    
@@ -781,47 +881,7 @@ public class MealPlannerResponseController {
 	        winePairing.setProductMatches(productMatches);
 	        
 	        recipe.setWinePairing(winePairing);
-	    }
-	    // Convert Nutrition from DTO to Entity
-	    NutritionDTO nutritionDTO = dto.getNutrition();
-	    if (nutritionDTO != null) {
-	        Nutrition nutrition = new Nutrition();
-	        
-	        // Convert nutrients
-	        List<NutrientEntity> nutrients = nutritionDTO.getNutrients().stream()
-	            .map(this::convertToNutrientEntity)
-	            .collect(Collectors.toList());
-	        nutrition.setNutrients(nutrients);
-	        
-	        // Convert properties
-	        List<NutritionProperty> properties = nutritionDTO.getProperties().stream()
-	            .map(this::convertToNutritionPropertyEntity)
-	            .collect(Collectors.toList());
-	        nutrition.setProperties(properties);
-	        
-	        // Convert ingredients
-	        List<IngredientNutrition> ingredients = nutritionDTO.getIngredients().stream()
-	            .map(this::convertToIngredientNutritionEntity)
-	            .collect(Collectors.toList());
-	        nutrition.setIngredients(ingredients);
-	        
-	        // Convert caloric breakdown
-	        CaloricBreakdownDTO caloricBreakdownDTO = nutritionDTO.getCaloricBreakdown();
-	        if (caloricBreakdownDTO != null) {
-	            CaloricBreakdown caloricBreakdown = convertToCaloricBreakdownEntity(caloricBreakdownDTO);
-	            nutrition.setCaloricBreakdown(caloricBreakdown);
-	        }
-	        
-	        // Convert weight per serving
-	        WeightPerServingDTO weightPerServingDTO = nutritionDTO.getWeightPerServing();
-	        if (weightPerServingDTO != null) {
-	            WeightPerServing weightPerServing = convertToWeightPerServingEntity(weightPerServingDTO);
-	            nutrition.setWeightPerServing(weightPerServing);
-	        }
-	        
-	        recipe.setNutrition(nutrition);
-	    }
-	    
+	    }	    
 	    return recipe;
 	}
 		
@@ -858,6 +918,47 @@ public class MealPlannerResponseController {
 	    return productMatch;
 	}
 	
+    private Nutrition convertToNutritionEntity(Nutrition nutrition, NutritionDTO nutritionDTO) {
+	    // Convert Nutrition from DTO to Entity
+	    if (nutritionDTO != null) {
+	        
+	        
+	        // Convert nutrients
+	        List<NutrientEntity> nutrients = nutritionDTO.getNutrients().stream()
+	            .map(this::convertToNutrientEntity)
+	            .collect(Collectors.toList());
+	        nutrition.setNutrients(nutrients);
+	        
+	        // Convert properties
+	        List<NutritionProperty> properties = nutritionDTO.getProperties().stream()
+	            .map(this::convertToNutritionPropertyEntity)
+	            .collect(Collectors.toList());
+	        nutrition.setProperties(properties);
+	        
+	        // Convert ingredients
+	        List<IngredientNutrition> ingredients = nutritionDTO.getIngredients().stream()
+	            .map(this::convertToIngredientNutritionEntity)
+	            .collect(Collectors.toList());
+	        nutrition.setIngredients(ingredients);
+	        
+	        // Convert caloric breakdown
+	        CaloricBreakdownDTO caloricBreakdownDTO = nutritionDTO.getCaloricBreakdown();
+	        if (caloricBreakdownDTO != null) {
+	            CaloricBreakdown caloricBreakdown = convertToCaloricBreakdownEntity(caloricBreakdownDTO);
+	            nutrition.setCaloricBreakdown(caloricBreakdown);
+	        }
+	        
+	        // Convert weight per serving
+	        WeightPerServingDTO weightPerServingDTO = nutritionDTO.getWeightPerServing();
+	        if (weightPerServingDTO != null) {
+	            WeightPerServing weightPerServing = convertToWeightPerServingEntity(weightPerServingDTO);
+	            nutrition.setWeightPerServing(weightPerServing);
+	        } 
+	    }
+	    log.debug("Resulting Nutrition entity: {}", nutrition);
+	    return(nutrition); 
+	}
+    
 	private NutrientEntity convertToNutrientEntity(NutrientDTO dto) {
 	    NutrientEntity nutrient = new NutrientEntity();
 	    nutrient.setName(dto.getName());
@@ -882,10 +983,10 @@ public class MealPlannerResponseController {
 	    ingredientNutrition.setAmount(dto.getAmount());
 	    ingredientNutrition.setUnit(dto.getUnit());
 	    
-	    List<NutrientEntity> nutrients = dto.getNutrients().stream()
-	        .map(this::convertToNutrientEntity)
-	        .collect(Collectors.toList());
-	    ingredientNutrition.setNutrients(nutrients);
+	    //List<NutrientEntity> nutrients = dto.getNutrients().stream()
+	    //    .map(this::convertToNutrientEntity)
+	    //    .collect(Collectors.toList());
+	    //ingredientNutrition.setNutrients(nutrients);
 	    
 	    return ingredientNutrition;
 	}

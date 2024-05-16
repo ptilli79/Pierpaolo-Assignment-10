@@ -89,7 +89,6 @@ public class RecipeDetails {
     private double spoonacularScore;
     @Property
     private String spoonacularSourceUrl;
-    // Getters and setters for all fields
     // Consider relationships for complex types
     // For example, List<String> could be managed as related nodes
     @Relationship(type = "HAS_INGREDIENT", direction = Relationship.Direction.OUTGOING)
@@ -101,8 +100,8 @@ public class RecipeDetails {
     @Relationship(type = "HAS_PREPARATION_INSTRUCTIONS", direction = Relationship.Direction.OUTGOING)
     private List<AnalyzedInstruction> analyzedInstructions;
     
-    @Relationship(type = "HAS_NUTRITION", direction = Relationship.Direction.OUTGOING)
-    private Nutrition nutrition;
+    //@Relationship(type = "HAS_NUTRITION", direction = Relationship.Direction.OUTGOING)
+    //private Nutrition nutrition;
     
     
     // Constructors, getters, and setters
@@ -334,10 +333,10 @@ public class RecipeDetails {
 	public void setWinePairing(WinePairing winePairing) {
 		this.winePairing = winePairing;
 	}
-    public Nutrition getNutrition() {
-        return nutrition;
-    }
-    public void setNutrition(Nutrition nutrition) {
-        this.nutrition = nutrition;
-    }
+    //public Nutrition getNutrition() {
+    //    return nutrition;
+    //}
+    //public void setNutrition(Nutrition nutrition) {
+    //    this.nutrition = nutrition;
+    //}
 }

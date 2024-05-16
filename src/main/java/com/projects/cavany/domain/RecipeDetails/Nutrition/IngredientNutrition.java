@@ -15,8 +15,8 @@ public class IngredientNutrition {
     private double amount;
     private String unit;
     
-    @Relationship(type = "HAS_NUTRIENT", direction = Relationship.Direction.OUTGOING)
-    private List<NutrientEntity> nutrients;
+    //@Relationship(type = "HAS_NUTRIENT", direction = Relationship.Direction.OUTGOING)
+    //private List<NutrientEntity> nutrients;
     
     // Getters and setters
 	public Long getId() {
@@ -49,10 +49,10 @@ public class IngredientNutrition {
 	public void setUnit(String unit) {
 		this.unit = unit;
 	}
-	public List<NutrientEntity> getNutrients() {
-		return nutrients;
-	}
-	public void setNutrients(List<NutrientEntity> nutrients) {
-		this.nutrients = nutrients;
-	}  
+	//public List<NutrientEntity> getNutrients() {
+	//	return nutrients;
+	//}
+	//public void setNutrients(List<NutrientEntity> nutrients) {
+	//	this.nutrients = nutrients;
+	//}  
 }
