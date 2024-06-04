@@ -10,7 +10,7 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 @Node
 public class Step {
 	@Id @GeneratedValue
-	private Long Id;
+	private Long id;
 	@Property
 	private int number;
 	@Property
@@ -24,12 +24,17 @@ public class Step {
 	@Relationship(type = "HAS_EQUIPMENTS", direction = Relationship.Direction.OUTGOING)
     private List<Equipment> equipment;
 	
+    // Constructor that takes a Step object 
+    //public Step (Long id) {
+    //    this.id = id;  
+    //}
+	
     // Getters and setters for all fields
 	public Long getId() {
-		return Id;
+		return id;
 	}
 	public void setId(Long id) {
-		Id = id;
+		this.id = id;
 	}
 	public int getNumber() {
 		return number;

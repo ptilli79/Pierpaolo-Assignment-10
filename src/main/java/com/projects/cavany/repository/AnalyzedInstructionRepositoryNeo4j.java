@@ -1,5 +1,8 @@
 package com.projects.cavany.repository;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,5 +19,7 @@ public interface AnalyzedInstructionRepositoryNeo4j extends Neo4jRepository<Anal
     
     @Query("MATCH (r:RecipeDetails {Id: $recipeId})-[rel:HAS_PREPARATION_INSTRUCTIONS]->(ai:AnalyzedInstruction) DETACH DELETE ai")
     void deleteInstructionsByRecipeId(Long recipeId);
+
+	List<AnalyzedInstruction> save(List<AnalyzedInstruction> newInstructions);
 
 }

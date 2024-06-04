@@ -27,7 +27,7 @@ public class Nutrition {
     private WeightPerServing weightPerServing;
     
     
-    // Constructor that takes a RecipeDetails object and assigns its id to Nutrition's recipeId
+    // Constructor that takes a RecipeDetails object and assigns its id to Nutrition's id
     public Nutrition(Long id) {
         this.id = id;  // Assuming RecipeDetails has an getId() method returning Long
     }
@@ -43,9 +43,9 @@ public class Nutrition {
 	public Long getId() {
 		return id;
 	}
-	//public void setId(Long id) {
-	//	this.id = id;
-	//}
+	public void setId(Long id) {
+		this.id = id;
+	}
 	public List<NutrientEntity> getNutrients() {
 		return nutrients;
 	}

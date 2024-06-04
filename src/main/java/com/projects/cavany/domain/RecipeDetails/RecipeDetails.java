@@ -97,8 +97,8 @@ public class RecipeDetails {
     @Relationship(type = "HAS_WINE_PAIRING", direction = Relationship.Direction.OUTGOING)
     private WinePairing winePairing;
     
-    @Relationship(type = "HAS_PREPARATION_INSTRUCTIONS", direction = Relationship.Direction.OUTGOING)
-    private List<AnalyzedInstruction> analyzedInstructions;
+    //@Relationship(type = "HAS_PREPARATION_INSTRUCTIONS", direction = Relationship.Direction.OUTGOING)
+    //private List<AnalyzedInstruction> analyzedInstructions;
     
     //@Relationship(type = "HAS_NUTRITION", direction = Relationship.Direction.OUTGOING)
     //private Nutrition nutrition;
@@ -321,12 +321,12 @@ public class RecipeDetails {
 	public void setExtendedIngredients(List<ExtendedIngredient> extendedIngredients) {
 		this.extendedIngredients = extendedIngredients;
 	}
-	public List<AnalyzedInstruction> getAnalyzedInstructions() {
-		return analyzedInstructions;
-	}
-	public void setAnalyzedInstructions(List<AnalyzedInstruction> analyzedInstructions) {
-		this.analyzedInstructions = analyzedInstructions;
-	}
+	//public List<AnalyzedInstruction> getAnalyzedInstructions() {
+	//	return analyzedInstructions;
+	//}
+	//public void setAnalyzedInstructions(List<AnalyzedInstruction> analyzedInstructions) {
+	//	this.analyzedInstructions = analyzedInstructions;
+	//}
 	public WinePairing getWinePairing() {
 		return winePairing;
 	}
