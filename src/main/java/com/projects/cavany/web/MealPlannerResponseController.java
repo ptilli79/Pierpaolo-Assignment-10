@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -61,6 +62,7 @@ import com.projects.cavany.dto.RecipeDetails.ExtendedIngredientDTO;
 import com.projects.cavany.dto.RecipeDetails.MeasuresDTO;
 import com.projects.cavany.dto.RecipeDetails.RecipeDetailsDTO;
 import com.projects.cavany.dto.RecipeDetails.RecipeWithIngredientsDTOFromEntity;
+import com.projects.cavany.dto.RecipeDetails.UsMetricDTO;
 import com.projects.cavany.dto.RecipeDetails.AnalyzedInstruction.AnalyzedInstructionDTO;
 import com.projects.cavany.dto.RecipeDetails.AnalyzedInstruction.EquipmentDTO;
 import com.projects.cavany.dto.RecipeDetails.AnalyzedInstruction.IngredientDTO;
@@ -122,8 +124,8 @@ public class MealPlannerResponseController {
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
-    private static final int maxIds = 35000;
-    private static final int batchSize = 50;
+    private static final int maxIds = 70000;
+    private static final int batchSize = 25;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
     private final List<String> diets = Arrays.asList("Whole30"); // You can add more diets as needed
     private final Map<String, List<String>> excludedIngredientsByCategory = new HashMap<>();
@@ -131,40 +133,84 @@ public class MealPlannerResponseController {
     // Constructor or @PostConstruct method
  // Constructor or @PostConstruct method
     public MealPlannerResponseController() {
+        // Existing categories with updated lists
         excludedIngredientsByCategory.put("Sugar", Arrays.asList(
             "sugar", "high fructose corn syrup", "agave nectar", "stevia", "molasses", "maple syrup", "confectioner's swerve", 
-            "sugar syrup", "sukrin sweetener", "sweet tea"));
+            "sugar syrup", "sukrin sweetener", "sweet tea", "acorn squash"));
 
         excludedIngredientsByCategory.put("Fats", Arrays.asList(
             "margarine", "lard", "avocado", "hass avocado", "avocado cubes", "avocados", "avocado mayo", "avocadoes", 
             "bacon fat", "butter", "buttermilk", "coconut butter", "coconut cream", "duck fat", "light butter"));
 
         excludedIngredientsByCategory.put("Canned Goods", Arrays.asList(
-            "5 spice powder", "canned black beans", "canned diced tomatoes", "canned garbanzo beans", "canned green chiles", 
+            "5 spice powder", "canned black beans", "canned anchovies", "canned diced tomatoes", "canned garbanzo beans", "canned green chiles", 
             "canned kidney beans", "canned mushrooms", "canned pinto beans", "canned red kidney beans", "canned tomatoes", 
             "canned tuna", "canned white beans", "canned white cannellini beans", "cannellini beans", "Pork & Beans"));
 
         excludedIngredientsByCategory.put("Liquors", Arrays.asList(
             "amaretto", "bourbon", "brandy", "beer", "champagne", "cognac", "gin", "grand marnier", "kahlua", "rum", 
             "tequila", "vodka", "whiskey", "white wine", "red wine", "dry vermouth", "sweet vermouth", "scotch", 
-            "irish cream", "marsala wine", "beer", "ginger beer", "liquor", "vermouth", "wine", "sparkling wine"));
+            "irish cream", "marsala wine", "ginger beer", "liquor", "vermouth", "wine", "sparkling wine"));
 
         excludedIngredientsByCategory.put("Baking Goods", Arrays.asList(
             "angel food cake mix", "baking bar", "biscuit mix", "biscuits", "bittersweet chocolate", "brownie mix", 
             "candy canes", "candy coating", "candy melts", "chocolate ice cream", "cinnamon stick", "cocoa nibs", 
             "cocoa powder", "corn bread mix", "dark chocolate candy bars", "dessert oats", "flour", "flour tortillas", 
             "fudge", "fudge topping", "gelatin", "gf chocolate cake mix", "graham cracker crumbs", "graham cracker pie crust", 
-            "instant chocolate pudding mix", "instant espresso powder", "instant lemon pudding mix", "instant yeast", 
+            "instant chocolate pudding mix", "instant espresso powder", "instant lemon pudding mix", "instant yeast", "yeast",
             "marshmallow fluff", "marshmallows", "pie crust", "puff pastry", "self-rising flour", "shortbread cookies", 
             "shortcrust pastry", "white cake mix", "yellow cake mix"));
 
-        // Add more categories based on the new ingredients
         excludedIngredientsByCategory.put("Spices & Seasonings", Arrays.asList(
             "angostura bitters", "black pepper", "cajun seasoning", "caraway seed", "cardamom pods", "celery salt", 
             "celery seed", "chana dal", "cracked pepper", "dill", "dried dill", "fenugreek leaf", "fenugreek seeds", 
             "ground lamb", "ground mace", "ground veal", "herbes de provence", "hot dog", "old bay seasoning", 
             "peppercorns", "red pepper flakes", "rub", "rum extract", "saffron threads", "sage", "sage leaves", 
             "saltine crackers", "seasoned rice vinegar", "sesame seeds", "summer savory", "sweet paprika", "taco seasoning mix"));
+
+        excludedIngredientsByCategory.put("Vegetables", Arrays.asList(
+            "artichokes", "asparagus spears", "bamboo shoots", "beets", "celery", "celery ribs", "celery root", "courgettes"));
+
+        excludedIngredientsByCategory.put("Meat & Seafood", Arrays.asList(
+            "andouille sausage", "beef brisket", "beef chuck roast", "chicken sausage", "clam juice", "clams", "cod", "corned beef", 
+            "cornish hens", "crab", "duck fat", "lamb", "pork butt", "pork loin chops", "pork loin roast", "pork roast", 
+            "pot roast", "rib tips", "roast beef", "sea scallops", "serrano chile", "sherry", "turkey kielbasa", "lump crab", "salami"));
+
+        excludedIngredientsByCategory.put("Dairy & Eggs", Arrays.asList(
+            "butter", "buttermilk", "cream cheese block", "cream of chicken soup", "cream of tartar", "creamed corn", 
+            "creamy peanut butter", "creme fraiche", "evaporated milk", "goat cheese", "milk chocolate chips", 
+            "processed american cheese", "provolone cheese", "ricotta", "skim vanilla greek yogurt", "whipped topping", "yogurt"));
+
+        excludedIngredientsByCategory.put("Fruits", Arrays.asList(
+            "apricot preserves", "apricots", "blackberries", "blueberries", "cherry", "dried apricots", "dried cherries", 
+            "grapefruit", "grapefruit juice", "kiwis", "medjool dates", "peaches", "prunes", "raspberry jam", "strawberries"));
+
+        excludedIngredientsByCategory.put("Grains & Cereals", Arrays.asList(
+            "brown rice flour", "bulgur", "cornmeal", "oats", "quinoa flour", "rice flour", "steel cut oats", 
+            "spelt flour", "whole wheat flour"));
+
+        excludedIngredientsByCategory.put("Nuts & Seeds", Arrays.asList(
+            "blanched almonds", "hemp seeds", "hazelnuts", "pumpkin seeds", "walnuts"));
+
+        excludedIngredientsByCategory.put("Condiments & Sauces", Arrays.asList(
+            "apple butter spread", "apricot preserves", "cocoa powder", "coconut milk", "coconut oil", "condensed milk", 
+            "cranberry sauce", "gravy", "honey", "ketchup", "mayo", "mustard", "peanut butter", "salsa", "soy sauce", 
+            "tomato paste", "tomato sauce", "vinegar", "worcestershire sauce"));
+
+        // Additional ingredients, added to their respective categories or new ones created if necessary
+        excludedIngredientsByCategory.put("Others", Arrays.asList(
+            "asafoetida", "asafoetida powder", "baby-back ribs", "baking bar", "biscuits", "black bean sauce", 
+            "black pepper", "butterscotch chips", "cajun seasoning", "chocolate syrup", "cinnamon stick", "cocoa powder", 
+            "coconut", "corn bread mix", "cracked pepper", "dark chocolate candy bars", "dill", "egg substitute", 
+            "gingersnap cookies", "graham cracker pie crust", "ground mace", "ground veal", "hershey's kisses brand milk chocolates", 
+            "instant espresso powder", "irish cream", "kahlua", "lemon juice", "light butter", "light coconut milk", 
+            "maple syrup", "marsala wine", "mint chutney", "miracle whip", "molasses", "nut butter", "nut meal", 
+            "pepper jack cheese", "peppercorns", "pie crust", "pizza crust", "polenta", "pork loin roast", "potato chips", 
+            "potato starch", "pumpkin puree", "red food coloring", "red pepper flakes", "rice krispies cereal", "rice milk", 
+            "scotch bonnet chili", "sesame seeds", "shortbread cookies", "slivered almonds", "smooth peanut butter", 
+            "soy protein powder", "strawberry jello", "sweet paprika", "tortilla", "turkey kielbasa", "vanilla extract", 
+            "vanilla frosting", "vanilla instant pudding mix", "whipped topping", "white chocolate chips", "whole cranberry sauce",
+            "wraps", "yellow cake mix"));
 
         // Continue adding new categories as needed
     }
@@ -360,18 +406,16 @@ public class MealPlannerResponseController {
 
 
 	    @GetMapping("/recipes/fetchRecipes")
-	    //public void fetchRecipes() throws IOException {
 	    public void fetchRecipes(@RequestParam(required = false) Long startId) throws IOException {
-
 	        RestTemplate restTemplate = new RestTemplate();
 	        int requestsMade = 0;
 	        AtomicInteger recipesSaved = new AtomicInteger();
 	        Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAllIds().stream().collect(Collectors.toSet());
 	        Optional<Long> maxIdInDb = recipeDetailsRepositoryNeo4j.findMaxId();
-	        //long startId = maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0;
 	        long startIdValue = startId != null ? startId : (maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0);
 
 	        final int maxRetries = 3;
+	        List<RecipeDetails> recipeDetailsBatch = new ArrayList<>();
 
 	        for (long i = startIdValue; i < maxIds; i += batchSize) {
 	            StringBuilder ids = new StringBuilder();
@@ -382,9 +426,6 @@ public class MealPlannerResponseController {
 	                ids.append(j);
 	            }
 	            if (ids.length() == 0) continue;
-	       
-
-	            
 
 	            String url = uriString.toStringRecipeBulkInformation() + "?ids=" + ids.toString() + "&includeNutrition=true&apiKey=" + uriString.getApiKey();
 	            ResponseEntity<BulkRecipeDetailsDTO[]> response = null;
@@ -424,23 +465,32 @@ public class MealPlannerResponseController {
 	            if (response != null && response.getBody() != null) {
 	                Arrays.stream(response.getBody()).forEach(recipeDetailsDTO -> {
 	                    RecipeDetails recipe = convertToRecipeEntity(recipeDetailsDTO);
-	                    //recipeDetailsRepositoryNeo4j.save(recipe);
-	                    recipeDetailsService.saveOrUpdateRecipeDetails(recipe);
-	                    
-	                    recipesSaved.incrementAndGet();
-
-	                    if (recipesSaved.get() % 500 == 0) {
-	                        try {
-	                            System.out.println("Saved 500 recipes, pausing...");
-	                            Thread.sleep(10000); // Wait for 10 seconds
-	                        } catch (InterruptedException e) {
-	                            Thread.currentThread().interrupt();
-	                        }
-	                    }
+	                    recipeDetailsBatch.add(recipe);
+	                    recipesSaved.incrementAndGet(); // Increment here
 	                });
+
+	                // Save the batch after processing all recipes in the current response
+	                recipeDetailsService.saveRecipeDetailsInBatch(recipeDetailsBatch);
+	                recipeDetailsBatch.clear();
+
+	                // Pause every 500 recipes saved
+	                if (recipesSaved.get() % 500 == 0) {
+	                    try {
+	                        System.out.println("Saved 500 recipes, pausing...");
+	                        Thread.sleep(10000); // Wait for 10 seconds
+	                    } catch (InterruptedException e) {
+	                        Thread.currentThread().interrupt();
+	                    }
+	                }
 	            }
 	        }
+
+	        // Save any remaining recipes in the batch
+	        if (!recipeDetailsBatch.isEmpty()) {
+	            recipeDetailsService.saveRecipeDetailsInBatch(recipeDetailsBatch);
+	        }
 	    }
+
    
 	    @GetMapping("/recipes/fetchNutrition")
 	    //public void fetchRecipes() throws IOException {
@@ -751,7 +801,12 @@ public class MealPlannerResponseController {
 	
 	private RecipeDetails convertToRecipeEntity(RecipeDetailsDTO dto) {
 	    RecipeDetails recipe = new RecipeDetails();
-	    // Set properties from DTO to Recipe entity
+	    
+	    if (recipe.getUuid() == null) {
+	        recipe.setUuid(UUID.randomUUID());
+	    }
+	    
+	    // Set other properties from DTO to Recipe entity
 	    recipe.setId(dto.getId());
 	    recipe.setTitle(dto.getTitle());
 	    recipe.setVegan(dto.isVegan());
@@ -782,35 +837,43 @@ public class MealPlannerResponseController {
 	    recipe.setDishTypes(dto.getDishTypes());
 	    recipe.setDiets(dto.getDiets());
 	    recipe.setOccasions(dto.getOccasions());
-	    // Convert WinePairingDTO if necessary or handle it according to your logic
 	    recipe.setInstructions(dto.getInstructions());
 	    recipe.setOriginalId(dto.getOriginalId());
 	    recipe.setSpoonacularScore(dto.getSpoonacularScore());
 	    recipe.setSpoonacularSourceUrl(dto.getSpoonacularSourceUrl());
-	    
-	 // Convert extendedIngredients from DTO to Entity
+
+	    // Convert extendedIngredients from DTO to Entity
 	    List<ExtendedIngredient> extendedIngredients = new ArrayList<>();
 	    for (ExtendedIngredientDTO ingredientDTO : dto.getExtendedIngredients()) {
 	        ExtendedIngredient ingredient = new ExtendedIngredient();
+	        
+	        if (ingredient.getUuid() == null) {
+	            ingredient.setUuid(UUID.randomUUID());
+	        }
+	        
 	        MeasuresDTO measuresDto = ingredientDTO.getMeasures(); // Get the MeasuresDto from ExtendedIngredientDTO
 	        if (measuresDto != null) {
 	           
 	        MetricSystem usMetric = new MetricSystem();
 	        if (measuresDto.getUs() != null) {
-	        	Double usAmount = measuresDto.getUs().getAmount(); // Now you're safely accessing getAmount
+	            Double usAmount = measuresDto.getUs().getAmount(); // Now you're safely accessing getAmount
 	            usMetric.setAmount((usAmount != null) ? usAmount.doubleValue() : 0.0); // Default to 0.0 if null
-	        	//usMetric.setAmount(measuresDto.getUs().getAmount());
-	        	usMetric.setUnitShort(measuresDto.getUs().getUnitShort());
-	        	usMetric.setUnitLong(measuresDto.getUs().getUnitLong());
+	            if (usMetric.getUuid() == null) {
+	                usMetric.setUuid(UUID.randomUUID());
+	            }
+	            usMetric.setUnitShort(measuresDto.getUs().getUnitShort());
+	            usMetric.setUnitLong(measuresDto.getUs().getUnitLong());
 	        }
 	           
 	        MetricSystem metricMetric = new MetricSystem();
 	        if (measuresDto.getMetric() != null) {
-	        	Double metricAmount = measuresDto.getMetric().getAmount(); // Again, safely accessing getAmount
+	            Double metricAmount = measuresDto.getMetric().getAmount(); // Again, safely accessing getAmount
 	            metricMetric.setAmount((metricAmount != null) ? metricAmount.doubleValue() : 0.0); // Default to 0.0 if null
-	        	//metricMetric.setAmount(measuresDto.getMetric().getAmount());
-	        	metricMetric.setUnitShort(measuresDto.getMetric().getUnitShort());
-	        	metricMetric.setUnitLong(measuresDto.getMetric().getUnitLong());
+	            if (metricMetric.getUuid() == null) {
+	                metricMetric.setUuid(UUID.randomUUID());
+	            }
+	            metricMetric.setUnitShort(measuresDto.getMetric().getUnitShort());
+	            metricMetric.setUnitLong(measuresDto.getMetric().getUnitLong());
 	        }
 
 	        // Now set the measures in ingredient
@@ -830,39 +893,9 @@ public class MealPlannerResponseController {
 	        ingredient.setUnit(ingredientDTO.getUnit());
 	        ingredient.setMeta(ingredientDTO.getMeta());
 	        
-	        extendedIngredients.add(ingredient);	        
+	        extendedIngredients.add(ingredient);        
 	    }
 	    recipe.setExtendedIngredients(extendedIngredients);
-	    
-	 // Placeholder for new logic: Convert AnalyzedInstruction from DTO to Entity
-	    List<AnalyzedInstruction> analyzedInstructions = new ArrayList<>();
-	    for (AnalyzedInstructionDTO instructionDTO : dto.getAnalyzedInstructions()) {
-	        AnalyzedInstruction instruction = new AnalyzedInstruction();
-	        instruction.setName(instructionDTO.getName());
-
-	        List<Step> steps = new ArrayList<>();
-	        for (StepDTO stepDTO : instructionDTO.getSteps()) {
-	            Step step = new Step();
-	            step.setNumber(stepDTO.getNumber());
-	            step.setStep(stepDTO.getStep());
-
-	            // Convert ingredients and equipment
-	            List<Ingredient> ingredients = stepDTO.getIngredients().stream()
-	                .map(ingredientDTO -> convertToIngredientEntity(ingredientDTO))
-	                .collect(Collectors.toList());
-	            step.setIngredients(ingredients);
-
-	            List<Equipment> equipment = stepDTO.getEquipment().stream()
-	                .map(equipmentDTO -> convertToEquipmentEntity(equipmentDTO))
-	                .collect(Collectors.toList());
-	            step.setEquipment(equipment);
-
-	            steps.add(step);
-	        }
-	        instruction.setSteps(steps);
-	        analyzedInstructions.add(instruction);
-	    }
-	    recipe.setAnalyzedInstructions(analyzedInstructions);
 	    
 	    // Convert WinePairing from DTO to Entity
 	    WinePairingDTO winePairingDTO = dto.getWinePairing();
@@ -881,31 +914,16 @@ public class MealPlannerResponseController {
 	        winePairing.setProductMatches(productMatches);
 	        
 	        recipe.setWinePairing(winePairing);
-	    }	    
+	    }    
 	    return recipe;
 	}
-		
-	private Ingredient convertToIngredientEntity(IngredientDTO ingredientDTO) {
-	    Ingredient ingredient = new Ingredient();
-	    ingredient.setId(ingredientDTO.getId());
-	    ingredient.setName(ingredientDTO.getName());
-	    ingredient.setLocalizedName(ingredientDTO.getLocalizedName());
-	    ingredient.setImage(ingredientDTO.getImage());
-	    return ingredient;
-	}
 
-	private Equipment convertToEquipmentEntity(EquipmentDTO equipmentDTO) {
-	    Equipment equipment = new Equipment();
-	    equipment.setId(equipmentDTO.getId());
-	    equipment.setName(equipmentDTO.getName());
-	    equipment.setLocalizedName(equipmentDTO.getLocalizedName());
-	    equipment.setImage(equipmentDTO.getImage());
-	    return equipment;
-	}
-	
 	private ProductMatch convertToProductMatchEntity(ProductMatchDTO dto) {
 	    ProductMatch productMatch = new ProductMatch();
 	    productMatch.setId(dto.getId());
+	    if (productMatch.getUuid() == null) {
+	        productMatch.setUuid(UUID.randomUUID());
+	    }
 	    productMatch.setTitle(dto.getTitle());
 	    productMatch.setDescription(dto.getDescription());
 	    productMatch.setPrice(dto.getPrice());
@@ -914,9 +932,20 @@ public class MealPlannerResponseController {
 	    productMatch.setRatingCount(dto.getRatingCount());
 	    productMatch.setScore(dto.getScore());
 	    productMatch.setLink(dto.getLink());
-	    // Add more fields if necessary
 	    return productMatch;
 	}
+
+	private MetricSystem convertMetricSystemDTO(UsMetricDTO dto) {
+	    MetricSystem metricSystem = new MetricSystem();
+	    metricSystem.setAmount(dto.getAmount());
+	    metricSystem.setUnitShort(dto.getUnitShort());
+	    metricSystem.setUnitLong(dto.getUnitLong());
+	    if (metricSystem.getUuid() == null) {
+	        metricSystem.setUuid(UUID.randomUUID());
+	    }
+	    return metricSystem;
+	}
+
 	
     private Nutrition convertToNutritionEntity(Nutrition nutrition, NutritionDTO nutritionDTO) {
 	    // Convert Nutrition from DTO to Entity

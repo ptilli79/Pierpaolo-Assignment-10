@@ -35,22 +35,34 @@ public class GenerateRecipeService {
     }
 
     public List<RecipeWithIngredientsDTOFromEntity> findLimitedRecipesWithIngredients(List<Long> recipeIds, List<String> dishTypes) {
-        String cypherQuery = 
-            "MATCH (recipe:RecipeDetails)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
-            "WHERE recipe.Id IN $recipeIds AND any(dishType IN $dishTypes WHERE dishType IN recipe.dishTypes) " +
-            "OPTIONAL MATCH (recipe)-[:HAS_PREPARATION_INSTRUCTIONS]->(:AnalyzedInstruction)-[:HAS_STEPS]->(:Step)-[:HAS_INGREDIENTS]->(stepIngredient:Ingredient) " +
-            "WITH recipe, " +
-            "COLLECT(DISTINCT ingredient.name) AS rawIngredients, " +
-            "COLLECT(DISTINCT ingredient.nameClean) AS cleanIngredients, " +
-            "COLLECT(DISTINCT stepIngredient.name) AS stepRawIngredients, " +
-            "COLLECT(DISTINCT stepIngredient.nameClean) AS stepCleanIngredients " +
-            "RETURN recipe.Id AS recipeId, recipe.title AS recipeTitle, " +
-            "cleanIngredients + rawIngredients + stepRawIngredients + stepCleanIngredients AS recipeIngredients " +
-            "ORDER BY recipe.Id ASC";
+    	String cypherQuery = 
+    		    "MATCH (recipe:RecipeDetails) " +
+    		    "WHERE recipe.Id IN $recipeIds AND ANY(dishType IN $dishTypes WHERE dishType IN recipe.dishTypes) " +
+    		    "WITH DISTINCT recipe.Id AS recipeId, recipe " +
+
+    		    // Step 2: Fetch Ingredients
+    		    "OPTIONAL MATCH (recipe)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
+    		    "WITH recipe, recipeId, COLLECT(DISTINCT toLower(ingredient.name)) AS rawIngredients, COLLECT(DISTINCT toLower(ingredient.nameClean)) AS cleanIngredients " +
+
+    		    // Step 3: Fetch Nutrition Ingredients
+    		    "OPTIONAL MATCH (recipe)-[:HAS_INGREDIENT_NUTRITION]->(nutritionIngredient:IngredientNutrition) " +
+    		    "WITH recipe, recipeId, rawIngredients, cleanIngredients, COLLECT(DISTINCT toLower(nutritionIngredient.name)) AS nutritionRawIngredients, COLLECT(DISTINCT toLower(nutritionIngredient.nameClean)) AS nutritionCleanIngredients " +
+
+    		    // Step 4: Fetch Step Ingredients
+    		    "OPTIONAL MATCH (recipe)-[:HAS_ANALYZED_INSTRUCTIONS]->(instruction:AnalyzedInstruction)-[:HAS_STEPS]->(:Step)-[:HAS_INGREDIENTS]->(stepIngredient:Ingredient) " +
+    		    "WITH recipe, recipeId, rawIngredients, cleanIngredients, nutritionRawIngredients, nutritionCleanIngredients, COLLECT(DISTINCT toLower(stepIngredient.name)) AS stepRawIngredients, COLLECT(DISTINCT toLower(stepIngredient.nameClean)) AS stepCleanIngredients " +
+
+    		    // Combine all ingredients
+    		    "WITH recipe, recipeId, rawIngredients + cleanIngredients + nutritionRawIngredients + nutritionCleanIngredients + stepRawIngredients + stepCleanIngredients AS allIngredientsList " +
+    		    "UNWIND allIngredientsList AS ingredientName " +
+    		    "WITH recipe, recipeId, recipe.title AS recipeTitle, COLLECT(DISTINCT ingredientName) AS distinctIngredients " +
+    		    "RETURN DISTINCT recipeId, recipe.title AS recipeTitle, distinctIngredients AS recipeIngredients " +
+    		    "ORDER BY recipeId ASC";
+
 
         // Assuming neo4jClient is correctly set up to interact with your Neo4j database
         return neo4jClient.query(cypherQuery)
-                .bindAll(Map.of("recipeIds", recipeIds, "dishTypes", dishTypes)) // Bind both recipeIds and dishTypes to the query
+                .bindAll(Map.of("recipeIds", recipeIds, "dishTypes", dishTypes)) // Bind recipeIds and dishTypes to the query
                 .fetchAs(RecipeWithIngredientsDTOFromEntity.class)
                 .mappedBy((typeSystem, record) -> {
                     Long recipeId = record.get("recipeId").asLong();
@@ -62,6 +74,10 @@ public class GenerateRecipeService {
                 .stream()
                 .collect(Collectors.toList());
     }
+
+
+
+
 
 	
     public void generateRecipeCSV(Map<Long, RecipeDetailsDTO> recipeDetailsMap, String outputPath) throws IOException {
