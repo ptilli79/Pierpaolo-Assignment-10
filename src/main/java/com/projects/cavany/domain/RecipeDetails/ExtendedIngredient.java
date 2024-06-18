@@ -36,14 +36,14 @@ public class ExtendedIngredient {
 	@Property
     private List<String> meta;
 
-	@Relationship(type = "HAS_IMPERIAL_UNITS", direction = Relationship.Direction.OUTGOING)
-    private MetricSystem us;
-	@Relationship(type = "HAS_METRIC_UNITS", direction = Relationship.Direction.OUTGOING)
-    private MetricSystem metric;
+	//@Relationship(type = "HAS_IMPERIAL_UNITS", direction = Relationship.Direction.OUTGOING)
+    //private MetricSystem us;
+	//@Relationship(type = "HAS_METRIC_UNITS", direction = Relationship.Direction.OUTGOING)
+    //private MetricSystem metric;
 	//Getters and Setters
-	public UUID getUuid() {
-		return uuid;
-	}
+	//public UUID getUuid() {
+	//	return uuid;
+	//}
 	public void setUuid(UUID uuid) {
 		this.uuid = uuid;
 	}
@@ -113,18 +113,18 @@ public class ExtendedIngredient {
 	public void setMeta(List<String> meta) {
 		this.meta = meta;
 	}
-	public MetricSystem getUs() {
-		return us;
-	}
-	public void setUs(MetricSystem us) {
-		this.us = us;
-	}
-	public MetricSystem getMetric() {
-		return metric;
-	}
-	public void setMetric(MetricSystem metric) {
-		this.metric = metric;
-	}
+//	public MetricSystem getUs() {
+//		return us;
+//	}
+//	public void setUs(MetricSystem us) {
+//		this.us = us;
+//	}
+//	public MetricSystem getMetric() {
+//		return metric;
+//	}
+//	public void setMetric(MetricSystem metric) {
+//		this.metric = metric;
+//	}
 	
 	//public Measures getMeasures() {
 	//	return measures;

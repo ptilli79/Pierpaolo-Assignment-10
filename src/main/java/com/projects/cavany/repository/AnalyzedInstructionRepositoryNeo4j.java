@@ -1,6 +1,7 @@
 package com.projects.cavany.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.neo4j.repository.Neo4jRepository;
@@ -21,5 +22,7 @@ public interface AnalyzedInstructionRepositoryNeo4j extends Neo4jRepository<Anal
     void deleteInstructionsByRecipeId(Long recipeId);
 
 	List<AnalyzedInstruction> save(List<AnalyzedInstruction> newInstructions);
-
+	
+    @Query("MATCH (a:AnalyzedInstructionsCollection) RETURN max(a.id)")
+    Optional<Long> findMaxId();
 }

@@ -38,6 +38,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.projects.cavany.domain.RecipeDetails.ExtendedIngredient;
+import com.projects.cavany.domain.RecipeDetails.ExtendedIngredientsCollection;
 import com.projects.cavany.domain.RecipeDetails.MetricSystem;
 import com.projects.cavany.domain.RecipeDetails.ProductMatch;
 import com.projects.cavany.domain.RecipeDetails.RecipeDetails;
@@ -124,8 +125,8 @@ public class MealPlannerResponseController {
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
-    private static final int maxIds = 70000;
-    private static final int batchSize = 25;
+    private static final int maxIds = 50000;
+    private static final int batchSize = 10;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
     private final List<String> diets = Arrays.asList("Whole30"); // You can add more diets as needed
     private final Map<String, List<String>> excludedIngredientsByCategory = new HashMap<>();
@@ -404,13 +405,12 @@ public class MealPlannerResponseController {
 	    }
 	
 
-
 	    @GetMapping("/recipes/fetchRecipes")
 	    public void fetchRecipes(@RequestParam(required = false) Long startId) throws IOException {
 	        RestTemplate restTemplate = new RestTemplate();
 	        int requestsMade = 0;
 	        AtomicInteger recipesSaved = new AtomicInteger();
-	        Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAllIds().stream().collect(Collectors.toSet());
+	        //Set<Long> existingIds = recipeDetailsRepositoryNeo4j.findAllIds().stream().collect(Collectors.toSet());
 	        Optional<Long> maxIdInDb = recipeDetailsRepositoryNeo4j.findMaxId();
 	        long startIdValue = startId != null ? startId : (maxIdInDb.isPresent() ? maxIdInDb.get() + 1 : 0);
 
@@ -472,6 +472,13 @@ public class MealPlannerResponseController {
 	                // Save the batch after processing all recipes in the current response
 	                recipeDetailsService.saveRecipeDetailsInBatch(recipeDetailsBatch);
 	                recipeDetailsBatch.clear();
+	                
+	                Arrays.stream(response.getBody()).forEach(recipeDetailsDTO -> {
+	                    ExtendedIngredientsCollection extendedIngredientsCollection = new ExtendedIngredientsCollection(recipeDetailsDTO.getId());
+	                    extendedIngredientsCollection = convertToExtendedIngredientsCollectionEntity(extendedIngredientsCollection, recipeDetailsDTO.getExtendedIngredients());
+	                    recipeDetailsService.saveOrUpdateExtendedIngredientsCollection(extendedIngredientsCollection);
+	                });
+
 
 	                // Pause every 500 recipes saved
 	                if (recipesSaved.get() % 500 == 0) {
@@ -843,7 +850,9 @@ public class MealPlannerResponseController {
 	    recipe.setSpoonacularSourceUrl(dto.getSpoonacularSourceUrl());
 
 	    // Convert extendedIngredients from DTO to Entity
-	    List<ExtendedIngredient> extendedIngredients = new ArrayList<>();
+/*
+  	    List<ExtendedIngredient> extendedIngredients = new ArrayList<>();
+ 
 	    for (ExtendedIngredientDTO ingredientDTO : dto.getExtendedIngredients()) {
 	        ExtendedIngredient ingredient = new ExtendedIngredient();
 	        
@@ -896,7 +905,8 @@ public class MealPlannerResponseController {
 	        extendedIngredients.add(ingredient);        
 	    }
 	    recipe.setExtendedIngredients(extendedIngredients);
-	    
+*/
+/*	    
 	    // Convert WinePairing from DTO to Entity
 	    WinePairingDTO winePairingDTO = dto.getWinePairing();
 	    if (winePairingDTO != null) {
@@ -914,9 +924,57 @@ public class MealPlannerResponseController {
 	        winePairing.setProductMatches(productMatches);
 	        
 	        recipe.setWinePairing(winePairing);
-	    }    
+	    }    */
 	    return recipe;
 	}
+	
+    private ExtendedIngredientsCollection convertToExtendedIngredientsCollectionEntity(ExtendedIngredientsCollection extendedIngredientsCollection, List<ExtendedIngredientDTO> extendedIngredientDTOList) {
+        if (extendedIngredientDTOList != null) {
+            List<ExtendedIngredient> extendedIngredients = extendedIngredientDTOList.stream()
+                .map(this::convertToExtendedIngredientEntity)
+                .collect(Collectors.toList());
+            extendedIngredientsCollection.setExtendedIngredients(extendedIngredients);
+        }
+        return extendedIngredientsCollection;
+    }
+
+    private ExtendedIngredient convertToExtendedIngredientEntity(ExtendedIngredientDTO extendedIngredientDTO) {
+        ExtendedIngredient extendedIngredient = new ExtendedIngredient();
+        extendedIngredient.setUuid(UUID.randomUUID());
+        extendedIngredient.setId(extendedIngredientDTO.getId());
+        extendedIngredient.setAisle(extendedIngredientDTO.getAisle());
+        extendedIngredient.setImage(extendedIngredientDTO.getImage());
+        extendedIngredient.setConsistency(extendedIngredientDTO.getConsistency());
+        extendedIngredient.setName(extendedIngredientDTO.getName());
+        extendedIngredient.setNameClean(extendedIngredientDTO.getNameClean());
+        extendedIngredient.setOriginal(extendedIngredientDTO.getOriginal());
+        extendedIngredient.setOriginalName(extendedIngredientDTO.getOriginalName());
+        extendedIngredient.setAmount(extendedIngredientDTO.getAmount());
+        extendedIngredient.setUnit(extendedIngredientDTO.getUnit());
+        extendedIngredient.setMeta(extendedIngredientDTO.getMeta());
+/*
+        MeasuresDTO measuresDto = extendedIngredientDTO.getMeasures();
+        if (measuresDto != null) {
+            MetricSystem usMetric = new MetricSystem();
+            if (measuresDto.getUs() != null) {
+                usMetric.setUuid(UUID.randomUUID());
+                usMetric.setAmount(measuresDto.getUs().getAmount());
+                usMetric.setUnitShort(measuresDto.getUs().getUnitShort());
+                usMetric.setUnitLong(measuresDto.getUs().getUnitLong());
+            }
+            MetricSystem metricMetric = new MetricSystem();
+            if (measuresDto.getMetric() != null) {
+                metricMetric.setUuid(UUID.randomUUID());
+                metricMetric.setAmount(measuresDto.getMetric().getAmount());
+                metricMetric.setUnitShort(measuresDto.getMetric().getUnitShort());
+                metricMetric.setUnitLong(measuresDto.getMetric().getUnitLong());
+            }
+            extendedIngredient.setUs(usMetric);
+            extendedIngredient.setMetric(metricMetric);
+        }
+*/
+        return extendedIngredient;
+    }
 
 	private ProductMatch convertToProductMatchEntity(ProductMatchDTO dto) {
 	    ProductMatch productMatch = new ProductMatch();

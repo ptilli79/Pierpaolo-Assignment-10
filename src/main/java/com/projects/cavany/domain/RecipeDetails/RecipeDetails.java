@@ -91,11 +91,11 @@ public class RecipeDetails {
     private String spoonacularSourceUrl;
     // Consider relationships for complex types
     // For example, List<String> could be managed as related nodes
-    @Relationship(type = "HAS_INGREDIENT", direction = Relationship.Direction.OUTGOING)
-    private List<ExtendedIngredient> extendedIngredients;
+    //@Relationship(type = "HAS_INGREDIENT", direction = Relationship.Direction.OUTGOING)
+    //private List<ExtendedIngredient> extendedIngredients;
     
-    @Relationship(type = "HAS_WINE_PAIRING", direction = Relationship.Direction.OUTGOING)
-    private WinePairing winePairing;
+    //@Relationship(type = "HAS_WINE_PAIRING", direction = Relationship.Direction.OUTGOING)
+    //private WinePairing winePairing;
     
     //@Relationship(type = "HAS_PREPARATION_INSTRUCTIONS", direction = Relationship.Direction.OUTGOING)
     //private List<AnalyzedInstruction> analyzedInstructions;
@@ -315,24 +315,24 @@ public class RecipeDetails {
 	public void setSpoonacularSourceUrl(String spoonacularSourceUrl) {
 		this.spoonacularSourceUrl = spoonacularSourceUrl;
 	}
-	public List<ExtendedIngredient> getExtendedIngredients() {
-		return extendedIngredients;
-	}
-	public void setExtendedIngredients(List<ExtendedIngredient> extendedIngredients) {
-		this.extendedIngredients = extendedIngredients;
-	}
+	//public List<ExtendedIngredient> getExtendedIngredients() {
+	//	return extendedIngredients;
+	//}
+	//public void setExtendedIngredients(List<ExtendedIngredient> extendedIngredients) {
+	//	this.extendedIngredients = extendedIngredients;
+	//}
 	//public List<AnalyzedInstruction> getAnalyzedInstructions() {
 	//	return analyzedInstructions;
 	//}
 	//public void setAnalyzedInstructions(List<AnalyzedInstruction> analyzedInstructions) {
 	//	this.analyzedInstructions = analyzedInstructions;
 	//}
-	public WinePairing getWinePairing() {
-		return winePairing;
-	}
-	public void setWinePairing(WinePairing winePairing) {
-		this.winePairing = winePairing;
-	}
+	//public WinePairing getWinePairing() {
+	//	return winePairing;
+	//}
+	//public void setWinePairing(WinePairing winePairing) {
+	//	this.winePairing = winePairing;
+	//}
     //public Nutrition getNutrition() {
     //    return nutrition;
     //}
