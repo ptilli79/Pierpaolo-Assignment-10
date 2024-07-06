@@ -35,17 +35,16 @@ public class GenerateRecipeService {
     }
 
     public List<RecipeWithIngredientsDTOFromEntity> findLimitedRecipesWithIngredients(List<Long> recipeIds, List<String> dishTypes) {
-        String cypherQuery = 
-                "MATCH (recipe:RecipeDetails) " +
-                "WHERE recipe.Id IN $recipeIds AND any(dishType IN $dishTypes WHERE dishType IN recipe.dishTypes) " +
-                "OPTIONAL MATCH (recipe)-[:HAS_INGREDIENTS_COLLECTION]->(ingredientCollection:ExtendedIngredientsCollection)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
-                "WITH recipe, " +
-                "COLLECT(DISTINCT ingredient.name) AS rawIngredients, " +
-                "COLLECT(DISTINCT ingredient.nameClean) AS cleanIngredients " +
-                "RETURN recipe.Id AS recipeId, recipe.title AS recipeTitle, " +
-                "cleanIngredients + rawIngredients AS recipeIngredients " +
-                "ORDER BY recipe.Id ASC";
-
+    	String cypherQuery = 
+    		    "MATCH (recipe:RecipeDetails) " +
+    		    "WHERE recipe.Id IN $recipeIds AND ANY(dishType IN $dishTypes WHERE dishType IN recipe.dishTypes) " +
+    		    "OPTIONAL MATCH (recipe)-[:HAS_INGREDIENTS_COLLECTION]->(ingredientCollection:ExtendedIngredientsCollection)-[:HAS_INGREDIENT]->(ingredient:ExtendedIngredient) " +
+    		    "WITH recipe, " +
+    		    "COLLECT(DISTINCT ingredient.name) AS rawIngredients, " +
+    		    "COLLECT(DISTINCT ingredient.nameClean) AS cleanIngredients " +
+    		    "RETURN recipe.Id AS recipeId, recipe.title AS recipeTitle, " +
+    		    "cleanIngredients + rawIngredients AS recipeIngredients " +
+    		    "ORDER BY recipe.Id ASC";
 
         // Assuming neo4jClient is correctly set up to interact with your Neo4j database
         return neo4jClient.query(cypherQuery)

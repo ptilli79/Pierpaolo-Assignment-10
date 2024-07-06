@@ -125,7 +125,7 @@ public class MealPlannerResponseController {
 	
     private int maxRequestsPerSecond = 4; // Change this value as needed
     private long rateLimitIntervalMillis = 1000; // 1000 milliseconds (1 second)
-    private static final int maxIds = 50000;
+    private static final int maxIds = 100000;
     private static final int batchSize = 10;
     String recipesFilePath = "C:\\Users\\pierp\\OneDrive\\Documentos\\MyRepository\\JavaBootcamp\\bootcamp-pierpaolo\\JavaBootcamp-Workspace\\Cavany\\output\\recipes.csv";
     private final List<String> diets = Arrays.asList("Whole30"); // You can add more diets as needed
