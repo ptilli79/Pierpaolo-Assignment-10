@@ -10,4 +10,7 @@ import com.projects.cavany.domain.Security.WebUser;
 @Repository
 public interface WebUserRepositoryNeo4j extends Neo4jRepository<WebUser, Long> {
     Optional<WebUser> findByUsername(String username);
+    // Method to check if a username already exists
+    boolean existsByUsername(String username);
+
 }

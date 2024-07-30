@@ -24,7 +24,7 @@ public class Authorities implements GrantedAuthority, Serializable {
 
     private String authority;
 
-    @Relationship(type = "BELONGS_TO", direction = Relationship.Direction.INCOMING)
+    @Relationship(type = "BELONGS_TO", direction = Relationship.Direction.OUTGOING)
     private WebUser user;
 
     @Override
@@ -32,7 +32,15 @@ public class Authorities implements GrantedAuthority, Serializable {
         return authority;
     }
 
-    public void setAuthority(String authority) {
+    public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setAuthority(String authority) {
         this.authority = authority;
     }
 

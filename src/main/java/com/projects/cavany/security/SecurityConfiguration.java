@@ -1,17 +1,33 @@
 package com.projects.cavany.security;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+import org.springframework.security.web.context.SecurityContextPersistenceFilter;
+import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
@@ -26,34 +42,30 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-        	.csrf()
-        	.and()
             .authorizeHttpRequests(authorize -> authorize
-            	.requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/login", "/register", "/error", "/index.html", "/allergies", "/recipes/filtered", "/allergies-and-ingredients.html", "/results", "/select-exclusions").permitAll()
-                .requestMatchers(
-                    "/mealplanner",
-                    "/recipes/random",
-                    "/complex/search",
-                    "/recipes/informationBulk",
-                    "/mealplanner/day",
-                    "/recipes",
-                    "/mealplanner/weeklyMealsRepo",
-                    "/mealplanner/dailyMealsRepo",
-                    "/recipe/detailsRepo",
-                    "/home"
-                ).hasRole("USER")
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/check-username", "/register", "/login", "/custom_login").permitAll()
+                .requestMatchers("/home").hasAnyAuthority("read")
                 .anyRequest().authenticated()
             )
-            .formLogin()
-            .and()
-            .logout()
-                .logoutUrl("/logout")
+            .formLogin(form -> form
+                    .loginPage("/login")
+                    .loginProcessingUrl("/custom_login")
+                    .defaultSuccessUrl("/home", true)
+                    .failureUrl("/login?error")
+                    .permitAll()
+            )
+            .logout(logout -> logout
                 .logoutSuccessUrl("/login?logout")
-                .permitAll();
-                
+            );
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder builder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        builder.authenticationProvider(authenticationProvider());
+        return builder.build();
     }
 
     @Bean
@@ -62,6 +74,18 @@ public class SecurityConfiguration {
         authenticationProvider.setUserDetailsService(customUserDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder);
         return authenticationProvider;
+    }
+    
+    @Bean
+    public AuthenticationFailureHandler authenticationFailureHandler() {
+        return new SimpleUrlAuthenticationFailureHandler() {
+            @Override
+            public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+                                                AuthenticationException exception) throws IOException, ServletException {
+                setDefaultFailureUrl("/login?error=true");
+                super.onAuthenticationFailure(request, response, exception);
+            }
+        };
     }
 }
 

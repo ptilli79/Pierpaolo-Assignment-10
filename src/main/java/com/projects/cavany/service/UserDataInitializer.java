@@ -40,13 +40,16 @@ public class UserDataInitializer {
         }
     }
 
-    private WebUser createUser(String username, String email, String password, RoleUser role, List<String> permissions) {
+    public WebUser createUser(String username, String email, String password, RoleUser role, List<String> permissions) {
+        if (webUserRepositoryNeo4j.existsByUsername(username)) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+
         WebUser user = new WebUser();
         user.setUsername(username);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setUsuarioRole(role);
-
         Set<Authorities> authorities = new HashSet<>();
         for (String permission : permissions) {
             Authorities authority = new Authorities();
@@ -54,8 +57,7 @@ public class UserDataInitializer {
             authority.setUser(user);
             authorities.add(authority);
         }
-
         user.setAuthorities(authorities);
-        return user;
+        return webUserRepositoryNeo4j.save(user);
     }
 }
