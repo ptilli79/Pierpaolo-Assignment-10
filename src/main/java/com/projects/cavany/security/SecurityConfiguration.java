@@ -43,15 +43,21 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/check-username", "/register", "/login", "/custom_login").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/check-username", "/register", "/login", "/custom_login", "/select-exclusions", "/allergies", "/results", "/recipes/**").permitAll()
                 .requestMatchers("/home").hasAnyAuthority("read")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                     .loginPage("/login")
                     .loginProcessingUrl("/custom_login")
-                    .defaultSuccessUrl("/home", true)
-                    .failureUrl("/login?error")
+                    .successHandler((request, response, authentication) -> {
+                        response.setStatus(HttpServletResponse.SC_OK);
+                        response.getWriter().write("success:Login successful");
+                    })
+                    .failureHandler((request, response, exception) -> {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.getWriter().write("error:Invalid username or password");
+                    })
                     .permitAll()
             )
             .logout(logout -> logout

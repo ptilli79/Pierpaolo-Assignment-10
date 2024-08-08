@@ -1,428 +1,94 @@
 body, html {
     margin: 0;
     padding: 0;
-    font-family: 'Arial', sans-serif;
-}
-
-.preference-group {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 30px;
-    width: 100%; /* Makes the group take the full width of its parent */
-}
-
-.container h1 {
-    margin-bottom: 40px;
-}
-
-.preference {
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 20px;
-    background: #F0F0F0;
-    transition: background-color 0.3s, transform 0.3s;
-}
-
-/* Update the hover effect to exclude disabled preferences */
-.preference:not(.active):not(.disabled):hover {
-    background-color: #04AA6D;
-    color: white;
-}
-
-.preferences-layout {
-    display: flex;
-    justify-content: center; /* Center the sections */
-    width: 100%;
-    flex-wrap: nowrap; /* Prevents wrapping, ensure it's on the same line */
-    padding: 0 10px; /* Adds padding inside the layout for better spacing */
-}
-
-.preference-section {
-    flex: 1; /* Allows each section to grow and fill the space equally */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Keeps content centered horizontally */
-    justify-content: flex-start; /* Aligns items to the top, change to 'center' if you want middle alignment */
-    margin: 0; /* Adds some margin between the two sections */
-}
-
-.preference.active {
-    background-color: #04AA6D;
-    color: white;
-    transform: scale(1.1);
-}
-
-.misaligned {
-    margin-top: 40px;
-}
-
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    max-width: 100%; 
-    padding: 50px 10px;
-    box-sizing: border-box;
-}
-
-.preferences {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-#submit-preferences {
-    margin-top: 20px;
-    padding: 10px 20px;
-    border: none;
-    font-size: 20px;
-    border-radius: 20px;
-    background-color: grey;
-    color: white;
-    cursor: not-allowed;
-    transition: background-color 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#submit-preferences:enabled {
-    background-color: magenta;
-    cursor: pointer;
-}
-
-#submit-preferences:hover {
-    background-color: #555;
-}
-
-.preference.disabled {
-    background-color: grey;
-    color: #ccc;
-    cursor: not-allowed;
-}
-
-#submit-preferences .fas {
-    margin-left: 10px;
-    font-size: 16px;
-}
-
-#submit-preferences:enabled:hover,
-#query-recipes:enabled:hover {
-    background-color: magenta; /* Keeps the button color consistent without changing on hover */
-    cursor: pointer; /* Ensures cursor remains a pointer */
-}
-
-#submit-preferences:disabled:hover,
-#query-recipes:disabled:hover {
-    background-color: grey; /* Keeps the button color consistent without changing on hover */
-    cursor: not-allowed; /* Ensures cursor indicates the button is not clickable */
-}
-
-#query-recipes {
-    margin-top: 20px;
-    padding: 10px 20px;
-    border: none;
-    font-size: 20px;
-    border-radius: 20px;
-    background-color: grey;
-    color: white;
-    cursor: not-allowed;
-    transition: background-color 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-
-
-#query-recipes:enabled {
-    background-color: magenta;
-    cursor: pointer;
-}
-
-#query-recipes:hover {
-    background-color: #555;
-}
-
-#query-recipes .fas {
-    margin-left: 10px;
-    font-size: 16px;
-}
-
-.recipe-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-    padding: 20px;
-}
-
-.recipe-card {
-    flex: 0 1 calc(33.333% - 20px); /* Three items per row minus the gap */
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    overflow: hidden;
-    text-align: left;
-    background-color: #f9f9f9;
-}
-
-.recipe-card h4 {
-    margin: 10px 0;
-    color: #333;
-}
-
-.recipe-card a {
-    display: block;
-    padding: 10px 20px;
-    background-color: #04AA6D;
-    color: white;
-    text-decoration: none;
-    transition: background-color 0.3s;
-}
-
-.recipe-card a:hover {
-    background-color: #037f57;
-}
-
-/* results.css */
-.results-title {
-	width: 100%; /* Ensure it takes full width */
-    background-color: blue;
-    color: white;
-    padding: 10px;
-}
-
-.button-container {
-    align-self: flex-start; /* Confirm this property is effective */
-    width: 100%;
-    display: flex; /* Ensure this div is also a flex container */
-    justify-content: flex-start; /* Align its children (the button) to the start */
-}
-
-.time-selection-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px; /* Adjust as necessary */
-    margin-bottom: 20px; /* Space from other elements */
-}
-
-/* Style for the numeric input */
-#timeAmount {
-	height: 34px;
-    padding: 0px 10px; /* Internal padding */
-    font-size: 20px; /* Text size */
-    text-align: center; /* Center the input text */
-    width: 35px; /* Adjust width as necessary */
-    outline: none; /* Remove focus outline */
-    transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transition for hover and focus */
-    justify-content: center;
-    border:none;
-    font-weight: bold; /* Make text bold */
-}
-
-.toggle-container {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 10px;
-    height: 34px;
-    border-radius: 20px;
-    background-color: white;
-    cursor: pointer;
-    color: orange; /* Default text color */
-    font-weight: bold; /* Make text bold */
-    border: 2px solid #ccc; /* Initial border color and thicker border */
-    border-color: orange;
-    font-size:18px;
-}
-
-.toggle-container:hover {
-    transform: scale(1.05); /* Optional: Slightly enlarges the button on hover for a tactile feel */
-}
-
-.toggle-container.days  {
-    color: darkorange; /* Dark orange for days */
-    font-weight: bold; /* Make text bold */
-    border-color: darkorange; /* Border color matching text */
-}
-
-.toggle-container.weeks  {
-    color: lightblue; /* Dark blue for weeks */
-    font-weight: bold; /* Make text bold */
-    border-color: lightblue; /* Border color matching text */
-}
-
-.back-to-search, .continue-search {
-    background-color: orange; /* Default background color */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s;
-    text-decoration: none;
-    margin: 10px 10px 10px 0; /* Adjusted for spacing around buttons */
-    height: 45px; /* Explicitly set the height */
-}
-
-.continue-search {
-background-color: magenta;
-}
-
-.back-to-search:hover, .continue-search:hover {
-    transform: scale(1.05);
-}
-
-.back-to-search i {
-    margin-right: 8px; /* Consistent space between icon and text */
-    font-size: 1.2em; /* Consistent icon size */
-}
-
-.continue-search i {
-    margin-left: 8px; /* Consistent space between icon and text */
-    font-size: 1.2em; /* Consistent icon size */
-}
-
-/* Registration form styles */
-.container {
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-.container h2 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: #555;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-button[type="submit"] {
-    width: 100%;
-    padding: 10px;
-    background-color: #FFA500;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-button[type="submit"]:hover {
-    background-color: #FF8C00;
-}
-.container p {
-    text-align: center;
-    margin-top: 15px;
-}
-
-.container a {
-    color: magenta;
-    text-decoration: none;
-}
-
-.container a:hover {
-    text-decoration: underline;
-}
-
-/* Ensure these styles don't conflict with your existing styles */
-body, html {
-    margin: 0;
-    padding: 0;
-    font-family: 'Arial', sans-serif;
+    font-family: Arial, sans-serif;
     background-color: #f0f0f0;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .container {
-    max-width: 400px;
-    margin: 0 auto;
+    text-align: center;
+    background-color: #fff;
     padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
 }
 
-.tab-container {
-    display: flex;
+h1, h2 {
+    color: #333;
     margin-bottom: 20px;
 }
 
-.tab {
-    flex: 1;
+.form-container {
+    padding: 20px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+input {
+    margin-bottom: 10px;
     padding: 10px;
-    border: none;
-    background-color: #f1f1f1;
-    cursor: pointer;
-}
-
-.tab.active {
-    background-color: #ddd;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-.form-group input {
+    font-size: 16px;
     width: 100%;
-    padding: 8px;
+    box-sizing: border-box;
     border: 1px solid #ddd;
-    border-radius: 4px;
+    border-radius: 5px;
 }
 
-button[type="submit"] {
-    width: 100%;
-    padding: 10px;
-    background-color: #4CAF50;
-    color: white;
+button, .button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-top: 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #1E90FF;
     border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s;
 }
 
-button[type="submit"]:hover {
-    background-color: #45a049;
+button:hover, .button:hover {
+    background-color: #4169E1;
 }
+
+/* Login-related buttons */
+#loginForm button[type="submit"],
+#showLoginForm,
+.button {
+    background-color: #1E90FF;
+}
+
+#loginForm button[type="submit"]:hover,
+#showLoginForm:hover,
+.button:hover {
+    background-color: #4169E1;
+}
+
+/* Register-related buttons */
+#registerForm button[type="submit"],
+#showRegisterForm {
+    background-color: magenta;
+}
+
+#registerForm button[type="submit"]:hover,
+#showRegisterForm:hover {
+    background-color: #ff00ff;
+}
+
 .alert {
     padding: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     border: 1px solid transparent;
     border-radius: 4px;
-    display: none; /* Ensure alerts are hidden by default */
+    display: none;
+    transition: opacity 2s ease-in-out;
 }
 
 .alert-danger {
@@ -437,72 +103,11 @@ button[type="submit"]:hover {
     border-color: #c3e6cb;
 }
 
-/* Add this to your style.css */
-.btn {
-    display: inline-block;
-    padding: 10px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    color: #ffffff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    text-align: center;
-    text-decoration: none;
+#showRegisterForm,
+#showLoginForm {
+    margin-top: 15px;
 }
 
-.btn:hover {
-    background-color: #0056b3;
-}
-
-
-
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f0f0f0;
-    margin: 0;
-}
-
-.container {
-    width: 300px;
-    padding: 20px;
-    background-color: white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-}
-
-.form-container {
-    padding: 20px;
-    border: 2px solid #ccc;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-input {
-    margin-bottom: 10px;
-    padding: 10px;
-    font-size: 16px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-button[type="submit"], button[type="button"] {
-    padding: 10px;
-    width: 100%;
-    background-color: #1E90FF;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-bottom: 10px;
-}
-
-button[type="submit"]:hover, button[type="button"]:hover {
-    background-color: #4169E1;
+.hidden {
+    opacity: 0;
 }

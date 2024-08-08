@@ -1,34 +1,25 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-	<meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_parameter" th:content="${_csrf.parameterName}" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recipe Results</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/recipeFilter.css">
     <!-- Add Font Awesome CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="container">
-    
-<div class="button-container">
-    <button class="back-to-search" onclick="goToAllergiesPage();"><i class="fas fa-arrow-left"></i> Back to Filter</button>
-    <button class="continue-search" onclick="fetchRecipeData();"> Continue Searching<i class="fas fa-search"></i></button>
-
-    
-</div>
-
-        
+        <div class="button-container">
+            <button class="back-to-search" onclick="goToAllergiesPage();"><i class="fas fa-arrow-left"></i> Back to Filter</button>
+            <button class="continue-search" onclick="fetchRecipeData();"> Continue Searching<i class="fas fa-search"></i></button>
+        </div>
         <div class="results-title">
             <h2>Recipes Results</h2>
         </div>
-        <div id="recipeResults" class="recipe-grid">
-            <!-- Each recipe will be a card like this -->
-            <!-- Repeat the above block for each recipe -->
-            <!-- You can dynamically generate or update these blocks based on your actual recipe search results -->
-        </div>
+        <div id="recipeResults" class="recipe-grid"></div>
     </div>
     <script src="/js/results.js"></script>
 </body>

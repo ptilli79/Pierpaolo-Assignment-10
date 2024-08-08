@@ -1,0 +1,308 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+.preference-group {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.container h1 {
+    margin-bottom: 40px;
+}
+
+.preference {
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    background: #F0F0F0;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.preference:not(.active):not(.disabled):hover {
+    background-color: #04AA6D;
+    color: white;
+}
+
+.preferences-layout {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    flex-wrap: nowrap;
+    padding: 0 10px;
+}
+
+.preference-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0;
+}
+
+.preference.active {
+    background-color: #04AA6D;
+    color: white;
+    transform: scale(1.1);
+}
+
+.misaligned {
+    margin-top: 40px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 100%; 
+    padding: 50px 10px;
+    box-sizing: border-box;
+}
+
+.preferences {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#submit-preferences {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    font-size: 20px;
+    border-radius: 20px;
+    background-color: grey;
+    color: white;
+    cursor: not-allowed;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#submit-preferences:enabled {
+    background-color: magenta;
+    cursor: pointer;
+}
+
+#submit-preferences:hover {
+    background-color: #555;
+}
+
+.preference.disabled {
+    background-color: grey;
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+#submit-preferences .fas {
+    margin-left: 10px;
+    font-size: 16px;
+}
+
+#submit-preferences:enabled:hover,
+#query-recipes:enabled:hover {
+    background-color: magenta;
+    cursor: pointer;
+}
+
+#submit-preferences:disabled:hover,
+#query-recipes:disabled:hover {
+    background-color: grey;
+    cursor: not-allowed;
+}
+
+.recipe-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+}
+
+.recipe-card {
+    flex: 0 1 calc(33.333% - 20px);
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    text-align: left;
+    background-color: #f9f9f9;
+}
+
+.recipe-card h4 {
+    margin: 10px 0;
+    color: #333;
+}
+
+.recipe-card a {
+    display: block;
+    padding: 10px 20px;
+    background-color: #04AA6D;
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.recipe-card a:hover {
+    background-color: #037f57;
+}
+
+.results-title {
+    width: 100%;
+    background-color: blue;
+    color: white;
+    padding: 10px;
+}
+
+.button-container {
+    align-self: flex-start;
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.time-selection-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#timeAmount {
+    height: 34px;
+    padding: 0px 10px;
+    font-size: 20px;
+    text-align: center;
+    width: 35px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    justify-content: center;
+    border: none;
+    font-weight: bold;
+}
+
+.toggle-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    height: 34px;
+    border-radius: 20px;
+    background-color: white;
+    cursor: pointer;
+    color: orange;
+    font-weight: bold;
+    border: 2px solid orange;
+    font-size: 18px;
+}
+
+.toggle-container:hover {
+    transform: scale(1.05);
+}
+
+.toggle-container.days {
+    color: darkorange;
+    border-color: darkorange;
+}
+
+.toggle-container.weeks {
+    color: lightblue;
+    border-color: lightblue;
+}
+
+.back-to-search, .continue-search {
+    background-color: orange;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s, transform 0.3s;
+    text-decoration: none;
+    margin: 10px 10px 10px 0;
+    height: 45px;
+}
+
+.continue-search {
+    background-color: magenta;
+}
+
+.back-to-search:hover, .continue-search:hover {
+    transform: scale(1.05);
+}
+
+.back-to-search i {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+.continue-search i {
+    margin-left: 8px;
+    font-size: 1.2em;
+}
+
+/* New styles for the allergies page buttons */
+.allergies-button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.back-to-diets, #query-recipes {
+    background-color: orange;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s, transform 0.3s;
+    text-decoration: none;
+    height: 45px;
+    margin: 0;
+}
+
+#query-recipes {
+    background-color: magenta;
+}
+
+.back-to-diets:hover, #query-recipes:hover {
+    transform: scale(1.05);
+}
+
+.back-to-diets i {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+#query-recipes i {
+    margin-left: 8px;
+    font-size: 1.2em;
+}
+
+#query-recipes:disabled {
+    background-color: grey;
+    cursor: not-allowed;
+}
+
+#query-recipes:disabled:hover {
+    transform: none;
+}

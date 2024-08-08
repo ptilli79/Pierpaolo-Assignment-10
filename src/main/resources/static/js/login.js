@@ -24,10 +24,24 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
             successMessage.style.display = 'none';
+            setTimeout(() => {
+                errorMessage.classList.add('hidden');
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                    errorMessage.classList.remove('hidden');
+                }, 2000);
+            }, 2000);
         } else {
             successMessage.textContent = message;
             successMessage.style.display = 'block';
             errorMessage.style.display = 'none';
+            setTimeout(() => {
+                successMessage.classList.add('hidden');
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                    successMessage.classList.remove('hidden');
+                }, 2000);
+            }, 2000);
         }
     }
 
@@ -46,38 +60,39 @@ document.addEventListener('DOMContentLoaded', function() {
         registerSuccessMessage.style.display = 'none';
     });
 
-loginForm.addEventListener('submit', function(event) {
-    event.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    fetch('/custom_login', {
-        method: 'POST',
-        body: formData,
-        redirect: 'follow' // Add this line
-    })
-    .then(response => {
-        if (response.redirected) {
-            window.location.href = response.url;
-        } else {
-            return response.text();
-        }
-    })
-    .then(result => {
-        if (result) {
-            const [status, message] = result.split(':', 2);
-            if (status === 'error') {
-                showMessage(message, true, 'login');
-            } else if (status === 'success') {
-                window.location.href = '/home';
+    // Handle login form submission
+    loginForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('/custom_login', {
+            method: 'POST',
+            body: formData,
+            redirect: 'follow'
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                return response.text();
             }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showMessage('An error occurred. Please try again.', true, 'login');
+        })
+        .then(result => {
+            if (result) {
+                const [status, message] = result.split(':', 2);
+                if (status === 'error') {
+                    showMessage(message, true, 'login');
+                } else if (status === 'success') {
+                    window.location.href = '/home';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('An error occurred. Please try again.', true, 'login');
+        });
     });
-});
 
     // Handle register form submission
     registerForm.addEventListener('submit', function(event) {
@@ -100,7 +115,7 @@ loginForm.addEventListener('submit', function(event) {
                     registerDiv.style.display = 'none';
                     loginDiv.style.display = 'block';
                     document.getElementById('username').value = formData.get('username');
-                }, 2000); // Redirect to login form after 2 seconds
+                }, 2000);
             }
         })
         .catch(error => {

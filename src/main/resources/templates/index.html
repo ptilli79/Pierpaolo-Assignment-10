@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-	<meta name="_csrf" th:content="${_csrf.token}" />
-    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_parameterName" th:content="${_csrf.parameterName}" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Dietary Preferences</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/recipeFilter.css">
     <!-- Add Font Awesome CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
@@ -14,7 +14,6 @@
     <div class="container">
         <h1>What are you in the mood for?</h1>
         <div id="preferences" class="preferences">
-
             <div class="preference-group">
                 <div class="preference" data-value="beef">Beef</div>
                 <div class="preference" data-value="chicken">Chicken</div>
@@ -24,7 +23,6 @@
                 <div class="preference" data-value="vegan">Vegan</div>
                 <div class="preference" data-value="ketogenic">Keto</div>
             </div>
-
             <div class="preference-group">
                 <div class="preference" data-value="paleolithic">Paleo</div>
                 <div class="preference" data-value="pescatarian">Pescetarian</div>
@@ -33,9 +31,7 @@
                 <div class="preference" data-value="low carbs">Low Carbs</div>
                 <div class="preference" data-value="high-protein">High Protein</div>
             </div>
-
             <div class="preference-group">
-                
                 <div class="preference" data-value="whole 30">Whole30</div>
                 <div class="preference" data-value="primal">Primal</div>
                 <div class="preference" data-value="lacto vegetarian">Lacto-Vegetarian</div>
@@ -43,8 +39,6 @@
                 <div class="preference" data-value="lacto ovo vegetarian">Lacto-Ovo-Vegetarian</div>
                 <div class="preference" data-value="fodmap friendly">Low FODMAP</div>
             </div>
-
-            <!-- Add more preferences as needed -->
         </div>
         <button id="submit-preferences">Next<i class="fas fa-arrow-right"></i></button>
     </div>
