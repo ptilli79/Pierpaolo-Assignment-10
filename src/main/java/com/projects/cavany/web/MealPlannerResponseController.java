@@ -26,9 +26,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,6 +40,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import com.projects.cavany.domain.RecipeDetails.ExtendedIngredient;
 import com.projects.cavany.domain.RecipeDetails.ExtendedIngredientsCollection;
@@ -85,6 +91,9 @@ import com.projects.cavany.repository.WeeklyPlannerRepository;
 import com.projects.cavany.service.GenerateRecipeService;
 import com.projects.cavany.service.MealPlannerService;
 import com.projects.cavany.service.RecipeDetailsService;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 
 import org.springframework.web.client.HttpServerErrorException;
 
@@ -787,7 +796,7 @@ public class MealPlannerResponseController {
 	public Map<Long, RecipeDetailsDTO> getRecipes(){
 		return recipeDetailsRepo.getAll();
 	}
-	
+		
 	private URI generateUriHelper(String uriString, String targetCalories, String diet, String exclude, String timeFrame) {
 		//String url = uriString.toString();
 		
@@ -938,6 +947,8 @@ public class MealPlannerResponseController {
         return extendedIngredientsCollection;
     }
 
+
+    
     private ExtendedIngredient convertToExtendedIngredientEntity(ExtendedIngredientDTO extendedIngredientDTO) {
         ExtendedIngredient extendedIngredient = new ExtendedIngredient();
         extendedIngredient.setUuid(UUID.randomUUID());

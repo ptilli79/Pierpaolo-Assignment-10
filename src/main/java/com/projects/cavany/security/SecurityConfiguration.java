@@ -44,24 +44,28 @@ public class SecurityConfiguration {
         http
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/check-username", "/register", "/login", "/custom_login", "/select-exclusions", "/allergies", "/results", "/recipes/**").permitAll()
+                .requestMatchers("/api/email/**").permitAll() // Explicitly allow all requests to /api/email/**
                 .requestMatchers("/home").hasAnyAuthority("read")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
-                    .loginPage("/login")
-                    .loginProcessingUrl("/custom_login")
-                    .successHandler((request, response, authentication) -> {
-                        response.setStatus(HttpServletResponse.SC_OK);
-                        response.getWriter().write("success:Login successful");
-                    })
-                    .failureHandler((request, response, exception) -> {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.getWriter().write("error:Invalid username or password");
-                    })
-                    .permitAll()
+                .loginPage("/login")
+                .loginProcessingUrl("/custom_login")
+                .successHandler((request, response, authentication) -> {
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.getWriter().write("success:Login successful");
+                })
+                .failureHandler((request, response, exception) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.getWriter().write("error:Invalid username or password");
+                })
+                .permitAll()
             )
             .logout(logout -> logout
                 .logoutSuccessUrl("/login?logout")
+            )
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/email/**") // Disable CSRF for /api/email/**
             );
 
         return http.build();
